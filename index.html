@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Contactes - Nova App</title>
+    <meta name="theme-color" content="#0f3568">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="manifest" href="./manifest.webmanifest?v=10">
+    <link rel="stylesheet" href="./styles.css?v=10">
+  </head>
+  <body>
+    <div class="page-shell">
+      <aside class="left-rail">
+        <section class="cover-card" aria-hidden="true">
+          <img src="./office-desk-premium.png" alt="" class="photo-fill photo-fill-cover">
+        </section>
+
+        <section class="reminders-card">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Hoy</p>
+            <h2>Dates importants</h2>
+            </div>
+          </div>
+          <p class="subtle section-text">
+            Aqui nomes veus el que importa avui per no perdre temps entre massa informacio.
+          </p>
+          <div id="reminderList" class="reminder-list"></div>
+        </section>
+      </aside>
+
+      <main class="center-stage">
+        <section class="directory-header">
+          <div>
+            <p class="eyebrow">Directorio</p>
+            <h2>Llista de contactes</h2>
+          </div>
+
+          <div class="stats-card">
+            <div>
+              <span class="stat-label">Contactes</span>
+              <strong id="contactCount">0</strong>
+            </div>
+            <div>
+              <span class="stat-label">Avisos d'avui</span>
+              <strong id="upcomingCount">0</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="search-card">
+          <div class="search-row">
+            <label class="search-box">
+              <span>Cercar contacte</span>
+              <input id="searchInput" type="search" placeholder="Nom, grup, telefon o correu">
+            </label>
+            <button id="clearSearchBtn" class="ghost-btn search-reset-btn" type="button">Veure tots</button>
+          </div>
+        </section>
+
+        <section class="directory-card">
+          <div class="directory-title-row">
+            <div>
+              <p class="eyebrow">Listado principal</p>
+              <h3>Contactes ordenats i a punt per treballar</h3>
+            </div>
+            <div class="directory-mini-badges">
+              <span>Cercar</span>
+              <span>Seleccio</span>
+              <span>Abecedario</span>
+            </div>
+          </div>
+
+          <div class="directory-shell">
+            <div id="contactList" class="contact-list"></div>
+            <nav id="alphabetNav" class="alphabet-nav" aria-label="Filtrar per lletra"></nav>
+          </div>
+        </section>
+      </main>
+
+      <aside class="right-rail">
+        <section class="actions-card">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Acciones</p>
+              <h2>Panell rapid</h2>
+            </div>
+          </div>
+
+          <div class="action-grid">
+            <button id="newContactBtn" class="primary-btn" type="button">Nou registre</button>
+            <button id="importXlsxBtn" class="secondary-btn" type="button">Importar XLSX</button>
+            <button id="exportXlsxBtn" class="secondary-btn" type="button">Exportar XLSX</button>
+            <button id="backupBtn" class="secondary-btn" type="button">Copia de seguretat</button>
+            <button id="selectFilteredBtn" class="ghost-btn" type="button">Marcar trobats</button>
+            <button id="deleteSelectedBtn" class="danger-btn" type="button">Esborrar seleccionats</button>
+            <button id="notificationsBtn" class="ghost-btn full-span" type="button">Activar avisos</button>
+            <input id="xlsxInput" type="file" accept=".xlsx" hidden>
+          </div>
+        </section>
+
+        <section class="feature-photo-card" aria-hidden="true">
+          <img src="./office-meeting-premium.png" alt="" class="photo-fill photo-fill-lounge">
+        </section>
+      </aside>
+    </div>
+
+    <div id="editorOverlay" class="overlay hidden" aria-hidden="true">
+      <div id="editorBackdrop" class="overlay-backdrop"></div>
+      <section class="editor-modal" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
+        <div class="panel-head">
+          <div>
+            <button id="backToListBtn" class="ghost-btn mobile-back-btn" type="button">Volver a la lista</button>
+            <p class="eyebrow">Fitxa</p>
+            <h2 id="editorTitle">Nou contacte</h2>
+          </div>
+          <div class="panel-actions">
+            <button id="deleteContactBtn" class="danger-btn" type="button">Borrar contacto</button>
+            <button id="closeEditorBtn" class="ghost-btn" type="button">Cerrar</button>
+            <button id="saveBtn" class="primary-btn" type="button">Guardar</button>
+          </div>
+        </div>
+
+        <form id="contactForm" class="contact-form">
+          <section class="photo-card full">
+            <div class="photo-card-head">
+              <div>
+                <p class="eyebrow">Foto</p>
+                <h3>Imatge del contacte</h3>
+              </div>
+              <button id="uploadPhotoBtn" class="secondary-btn" type="button">Afegir foto</button>
+            </div>
+            <div class="photo-card-body">
+              <div class="contact-photo-preview" id="contactPhotoPreview">
+                <img id="contactPhotoImage" class="hidden" alt="Foto del contacte">
+                <span id="contactPhotoInitials">?</span>
+              </div>
+              <p class="subtle">
+                Pots guardar una foto per veure-la al llistat i dins de la fitxa principal.
+              </p>
+            </div>
+            <input id="photoInput" type="file" accept="image/*" hidden>
+          </section>
+
+          <div class="form-grid">
+            <label class="field-card">
+              <span>Nom</span>
+              <input name="name" type="text" required>
+            </label>
+
+            <label class="field-card">
+              <span>Grup</span>
+              <input name="group" type="text" list="groupOptions">
+            </label>
+
+            <label class="field-card">
+              <span>Telf. Treball</span>
+              <input name="phoneWork" type="tel">
+              <a id="phoneWorkLink" class="mail-link hidden" href="#" target="_self">Llamar</a>
+            </label>
+
+            <label class="field-card">
+              <span>Telf. Casa</span>
+              <input name="phoneHome" type="tel">
+              <a id="phoneHomeLink" class="mail-link hidden" href="#" target="_self">Llamar</a>
+            </label>
+
+            <label class="field-card">
+              <span>Telf. Mobil</span>
+              <input name="phoneMobile" type="tel">
+              <a id="phoneMobileLink" class="mail-link hidden" href="#" target="_self">Llamar</a>
+            </label>
+
+            <label class="field-card">
+              <span>Tipus telf. Mobil</span>
+              <input name="phoneMobileType" type="text" list="mobileTypeOptions">
+            </label>
+
+            <div class="field-card date-card">
+              <label>
+                <span>Data 1</span>
+                <input name="date1" type="text" placeholder="27/10/1957, 27-10-1957 o 27 de octubre de 1957">
+              </label>
+              <label>
+                <span>Tipus data 1</span>
+                <input name="date1Type" type="text" list="dateTypeOptions">
+              </label>
+              <p id="date1Info" class="date-info"></p>
+            </div>
+
+            <div class="field-card date-card">
+              <label>
+                <span>Data 2</span>
+                <input name="date2" type="text">
+              </label>
+              <label>
+                <span>Tipus data 2</span>
+                <input name="date2Type" type="text" list="dateTypeOptions">
+              </label>
+              <p id="date2Info" class="date-info"></p>
+            </div>
+
+            <div class="field-card date-card">
+              <label>
+                <span>Data 3</span>
+                <input name="date3" type="text">
+              </label>
+              <label>
+                <span>Tipus data 3</span>
+                <input name="date3Type" type="text" list="dateTypeOptions">
+              </label>
+              <p id="date3Info" class="date-info"></p>
+            </div>
+
+            <div class="field-card date-card">
+              <label>
+                <span>Data 4</span>
+                <input name="date4" type="text">
+              </label>
+              <label>
+                <span>Tipus data 4</span>
+                <input name="date4Type" type="text" list="dateTypeOptions">
+              </label>
+              <p id="date4Info" class="date-info"></p>
+            </div>
+
+            <label class="field-card">
+              <span>Mail 1</span>
+              <input name="mail1" type="email">
+              <a id="mail1Link" class="mail-link hidden" href="#" target="_self">Abrir correo</a>
+            </label>
+
+            <label class="field-card">
+              <span>Mail 2</span>
+              <input name="mail2" type="email">
+              <a id="mail2Link" class="mail-link hidden" href="#" target="_self">Abrir correo</a>
+            </label>
+
+            <label class="field-card full">
+              <span>Adreca</span>
+              <input name="address" type="text">
+            </label>
+
+            <label class="field-card">
+              <span>C.P.</span>
+              <input name="postalCode" type="text">
+            </label>
+
+            <label class="field-card">
+              <span>Poblacio</span>
+              <input name="city" type="text">
+            </label>
+
+            <div class="field-card full gps-card">
+              <div class="gps-head">
+                <span>Ubicacio GPS</span>
+                <div class="gps-actions">
+                  <button id="saveGpsBtn" class="secondary-btn" type="button">Grabar GPS</button>
+                  <button id="openGpsBtn" class="ghost-btn" type="button">Ir a GPS</button>
+                </div>
+              </div>
+              <div class="gps-grid">
+                <label>
+                  <span>Latitud</span>
+                  <input name="gpsLat" type="text" placeholder="41.3874">
+                </label>
+                <label>
+                  <span>Longitud</span>
+                  <input name="gpsLng" type="text" placeholder="2.1686">
+                </label>
+              </div>
+              <p id="gpsStatus" class="subtle"></p>
+            </div>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <datalist id="groupOptions">
+      <option value="Familia"></option>
+      <option value="Personal"></option>
+      <option value="Empresa"></option>
+      <option value="Altres"></option>
+    </datalist>
+
+    <datalist id="mobileTypeOptions">
+      <option value="Particular"></option>
+      <option value="Familia"></option>
+      <option value="Empresa"></option>
+      <option value="Altres"></option>
+    </datalist>
+
+    <datalist id="dateTypeOptions">
+      <option value="Aniversari"></option>
+      <option value="Santoral"></option>
+      <option value="Noces"></option>
+      <option value="Traspas"></option>
+      <option value="Altres"></option>
+    </datalist>
+
+    <script src="./jszip.min.js"></script>
+    <script src="./app.js?v=10"></script>
+  </body>
+</html>
