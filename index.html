@@ -10,8 +10,8 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
     <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
     <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
-    <link rel="manifest" href="./manifest.webmanifest?v=16">
-    <link rel="stylesheet" href="./styles.css?v=16">
+    <link rel="manifest" href="./manifest.webmanifest?v=18">
+    <link rel="stylesheet" href="./styles.css?v=18">
   </head>
   <body>
     <div class="page-shell">
@@ -36,30 +36,36 @@
 
       <main class="center-stage">
         <section class="directory-header">
-          <div>
+          <div class="directory-header-copy">
             <p class="eyebrow">Directorio</p>
             <h2>Llista de contactes</h2>
           </div>
 
-          <div class="stats-card">
-            <div>
-              <span class="stat-label">Contactes</span>
-              <strong id="contactCount">0</strong>
+          <div class="directory-header-tools">
+            <div class="stats-card">
+              <div>
+                <span class="stat-label">Contactes</span>
+                <strong id="contactCount">0</strong>
+              </div>
+              <div>
+                <span class="stat-label">Avisos d'avui</span>
+                <strong id="upcomingCount">0</strong>
+              </div>
             </div>
-            <div>
-              <span class="stat-label">Avisos d'avui</span>
-              <strong id="upcomingCount">0</strong>
+
+            <div class="tools-menu-wrap">
+              <button id="toolsMenuBtn" class="tools-menu-btn" type="button" aria-expanded="false" aria-controls="toolsMenuPanel">
+                Eines
+              </button>
+              <div id="toolsMenuPanel" class="tools-menu-panel hidden" role="menu" aria-label="Eines de treball">
+                <button id="importQuickBtn" class="tools-menu-item" type="button" role="menuitem">Importar XLSX</button>
+                <button id="exportQuickBtn" class="tools-menu-item" type="button" role="menuitem">Exportar XLSX</button>
+                <button id="backupQuickBtn" class="tools-menu-item" type="button" role="menuitem">Copia de seguretat</button>
+                <button id="selectQuickBtn" class="tools-menu-item" type="button" role="menuitem">Marcar trobats</button>
+                <button id="deleteQuickBtn" class="tools-menu-item danger" type="button" role="menuitem">Esborrar seleccionats</button>
+              </div>
             </div>
           </div>
-        </section>
-
-        <section class="mobile-actions-bar" aria-label="Accions rapides">
-          <button id="newContactQuickBtn" class="primary-btn" type="button">Nou</button>
-          <button id="importQuickBtn" class="secondary-btn" type="button">Importar</button>
-          <button id="exportQuickBtn" class="secondary-btn" type="button">Exportar</button>
-          <button id="backupQuickBtn" class="secondary-btn" type="button">Backup</button>
-          <button id="selectQuickBtn" class="ghost-btn" type="button">Marcar</button>
-          <button id="deleteQuickBtn" class="danger-btn" type="button">Esborrar</button>
         </section>
 
         <section class="search-card">
@@ -98,13 +104,12 @@
           </div>
 
           <div class="action-grid">
-            <button id="newContactBtn" class="primary-btn" type="button">Nou registre</button>
+            <button id="newContactBtn" class="primary-btn hidden-action-anchor" type="button">Nou registre</button>
             <button id="importXlsxBtn" class="secondary-btn" type="button">Importar XLSX</button>
             <button id="exportXlsxBtn" class="secondary-btn" type="button">Exportar XLSX</button>
             <button id="backupBtn" class="secondary-btn" type="button">Copia de seguretat</button>
             <button id="selectFilteredBtn" class="ghost-btn" type="button">Marcar trobats</button>
             <button id="deleteSelectedBtn" class="danger-btn" type="button">Esborrar seleccionats</button>
-            <button id="notificationsBtn" class="ghost-btn full-span" type="button">Activar avisos</button>
             <input id="xlsxInput" type="file" accept=".xlsx" hidden>
           </div>
         </section>
@@ -316,6 +321,6 @@
     </datalist>
 
     <script src="./jszip.min.js"></script>
-    <script src="./app.js?v=16"></script>
+    <script src="./app.js?v=18"></script>
   </body>
 </html>

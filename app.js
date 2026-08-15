@@ -100,7 +100,8 @@ const editorTitle = document.getElementById("editorTitle");
 const saveBtn = document.getElementById("saveBtn");
 const newContactBtn = document.getElementById("newContactBtn");
 const newContactTopBtn = document.getElementById("newContactTopBtn");
-const newContactQuickBtn = document.getElementById("newContactQuickBtn");
+const toolsMenuBtn = document.getElementById("toolsMenuBtn");
+const toolsMenuPanel = document.getElementById("toolsMenuPanel");
 const importXlsxBtn = document.getElementById("importXlsxBtn");
 const importQuickBtn = document.getElementById("importQuickBtn");
 const exportXlsxBtn = document.getElementById("exportXlsxBtn");
@@ -111,7 +112,6 @@ const selectFilteredBtn = document.getElementById("selectFilteredBtn");
 const selectQuickBtn = document.getElementById("selectQuickBtn");
 const deleteSelectedBtn = document.getElementById("deleteSelectedBtn");
 const deleteQuickBtn = document.getElementById("deleteQuickBtn");
-const notificationsBtn = document.getElementById("notificationsBtn");
 const xlsxInput = document.getElementById("xlsxInput");
 const saveGpsBtn = document.getElementById("saveGpsBtn");
 const openGpsBtn = document.getElementById("openGpsBtn");
@@ -217,6 +217,7 @@ function openEditor() {
   }
   editorOverlay.classList.remove("hidden");
   editorOverlay.setAttribute("aria-hidden", "false");
+  closeToolsMenu();
 }
 
 function closeEditor() {
@@ -624,18 +625,6 @@ async function notifyTodayReminders() {
   localStorage.setItem(NOTIFY_DAY_KEY, dayKey);
 }
 
-async function requestNotifications() {
-  if (!("Notification" in window)) {
-    alert("Aquest navegador no admet notificacions web.");
-    return;
-  }
-  const permission = await Notification.requestPermission();
-  if (permission === "granted") {
-    notificationsBtn.textContent = "Avisos activats";
-    notifyTodayReminders();
-  }
-}
-
 function openGpsLocation() {
   const lat = String(contactForm.elements.namedItem("gpsLat")?.value || "").trim();
   const lng = String(contactForm.elements.namedItem("gpsLng")?.value || "").trim();
@@ -831,11 +820,23 @@ function registerServiceWorker() {
   }
 }
 
-function findStatus() {
-  if (!("Notification" in window)) return "Avisos no disponibles";
-  if (Notification.permission === "granted") return "Avisos activats";
-  if (Notification.permission === "denied") return "Avisos bloquejats";
-  return "Activar avisos";
+function closeToolsMenu() {
+  if (!toolsMenuPanel || !toolsMenuBtn) return;
+  toolsMenuPanel.classList.add("hidden");
+  toolsMenuBtn.classList.remove("is-open");
+  toolsMenuBtn.setAttribute("aria-expanded", "false");
+}
+
+function toggleToolsMenu() {
+  if (!toolsMenuPanel || !toolsMenuBtn) return;
+  const isHidden = toolsMenuPanel.classList.contains("hidden");
+  if (isHidden) {
+    toolsMenuPanel.classList.remove("hidden");
+    toolsMenuBtn.classList.add("is-open");
+    toolsMenuBtn.setAttribute("aria-expanded", "true");
+    return;
+  }
+  closeToolsMenu();
 }
 
 function renderAll() {
@@ -848,7 +849,6 @@ function renderAll() {
 
 async function init() {
   state.contacts = await loadContacts();
-  notificationsBtn.textContent = findStatus();
   renderAll();
   registerServiceWorker();
   notifyTodayReminders();
@@ -859,7 +859,11 @@ clearSearchBtn.addEventListener("click", clearSearch);
 saveBtn.addEventListener("click", saveCurrentContact);
 newContactBtn.addEventListener("click", newContact);
 newContactTopBtn?.addEventListener("click", () => newContactBtn.click());
-newContactQuickBtn?.addEventListener("click", () => newContactBtn.click());
+toolsMenuBtn?.addEventListener("click", (event) => {
+  event.stopPropagation();
+  toggleToolsMenu();
+});
+toolsMenuPanel?.addEventListener("click", (event) => event.stopPropagation());
 importXlsxBtn.addEventListener("click", () => xlsxInput.click());
 importQuickBtn?.addEventListener("click", () => importXlsxBtn.click());
 exportXlsxBtn.addEventListener("click", exportContactsXlsx);
@@ -870,7 +874,6 @@ selectFilteredBtn.addEventListener("click", selectFilteredContacts);
 selectQuickBtn?.addEventListener("click", () => selectFilteredBtn.click());
 deleteSelectedBtn.addEventListener("click", deleteSelectedContacts);
 deleteQuickBtn?.addEventListener("click", () => deleteSelectedBtn.click());
-notificationsBtn.addEventListener("click", requestNotifications);
 saveGpsBtn.addEventListener("click", captureGps);
 openGpsBtn.addEventListener("click", openGpsLocation);
 uploadPhotoBtn.addEventListener("click", uploadPhoto);
@@ -897,7 +900,9 @@ xlsxInput.addEventListener("change", async (event) => {
 });
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !editorOverlay.classList.contains("hidden")) closeEditor();
+  if (event.key === "Escape") closeToolsMenu();
 });
+document.addEventListener("click", () => closeToolsMenu());
 
 init().catch((error) => {
   console.error(error);
