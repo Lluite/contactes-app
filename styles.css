@@ -237,6 +237,10 @@ input:focus {
   background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(246,249,253,0.98));
 }
 
+.mobile-actions-bar {
+  display: none;
+}
+
 .search-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -570,6 +574,16 @@ input:focus {
   padding: 2px 0 0;
 }
 
+.phone-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #f6faff, #eef4fb);
+  border: 1px solid var(--border);
+}
+
 .mail-link:hover,
 .action-link:hover {
   text-decoration: underline;
@@ -673,6 +687,27 @@ input:focus {
     display: flex;
   }
 
+  .mobile-actions-bar {
+    position: sticky;
+    top: 12px;
+    z-index: 6;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    padding: 14px;
+    background: rgba(251, 253, 255, 0.96);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(10px);
+  }
+
+  .mobile-actions-bar button {
+    min-height: 46px;
+    padding: 10px 12px;
+    font-size: 0.92rem;
+  }
+
   .directory-header,
   .directory-title-row,
   .section-head,
@@ -706,6 +741,10 @@ input:focus {
   .form-grid,
   .gps-grid {
     grid-template-columns: 1fr;
+  }
+
+  .mobile-actions-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .directory-shell {

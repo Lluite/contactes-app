@@ -8,8 +8,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
-    <link rel="manifest" href="./manifest.webmanifest?v=11">
-    <link rel="stylesheet" href="./styles.css?v=11">
+    <link rel="manifest" href="./manifest.webmanifest?v=12">
+    <link rel="stylesheet" href="./styles.css?v=12">
   </head>
   <body>
     <div class="page-shell">
@@ -49,6 +49,15 @@
               <strong id="upcomingCount">0</strong>
             </div>
           </div>
+        </section>
+
+        <section class="mobile-actions-bar" aria-label="Accions rapides">
+          <button id="newContactQuickBtn" class="primary-btn" type="button">Nou</button>
+          <button id="importQuickBtn" class="secondary-btn" type="button">Importar</button>
+          <button id="exportQuickBtn" class="secondary-btn" type="button">Exportar</button>
+          <button id="backupQuickBtn" class="secondary-btn" type="button">Backup</button>
+          <button id="selectQuickBtn" class="ghost-btn" type="button">Marcar</button>
+          <button id="deleteQuickBtn" class="danger-btn" type="button">Esborrar</button>
         </section>
 
         <section class="search-card">
@@ -159,19 +168,19 @@
             <div class="field-card action-field-card">
               <span>Telf. Treball</span>
               <input name="phoneWork" type="tel">
-              <a id="phoneWorkLink" class="action-link hidden" href="#">Llamar</a>
+              <a id="phoneWorkLink" class="action-link phone-link hidden" href="#"></a>
             </div>
 
             <div class="field-card action-field-card">
               <span>Telf. Casa</span>
               <input name="phoneHome" type="tel">
-              <a id="phoneHomeLink" class="action-link hidden" href="#">Llamar</a>
+              <a id="phoneHomeLink" class="action-link phone-link hidden" href="#"></a>
             </div>
 
             <div class="field-card action-field-card">
               <span>Telf. Mobil</span>
               <input name="phoneMobile" type="tel">
-              <a id="phoneMobileLink" class="action-link hidden" href="#">Llamar</a>
+              <a id="phoneMobileLink" class="action-link phone-link hidden" href="#"></a>
             </div>
 
             <label class="field-card">
@@ -303,6 +312,6 @@
     </datalist>
 
     <script src="./jszip.min.js"></script>
-    <script src="./app.js?v=11"></script>
+    <script src="./app.js?v=12"></script>
   </body>
 </html>

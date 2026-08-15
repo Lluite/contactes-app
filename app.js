@@ -99,11 +99,17 @@ const contactForm = document.getElementById("contactForm");
 const editorTitle = document.getElementById("editorTitle");
 const saveBtn = document.getElementById("saveBtn");
 const newContactBtn = document.getElementById("newContactBtn");
+const newContactQuickBtn = document.getElementById("newContactQuickBtn");
 const importXlsxBtn = document.getElementById("importXlsxBtn");
+const importQuickBtn = document.getElementById("importQuickBtn");
 const exportXlsxBtn = document.getElementById("exportXlsxBtn");
+const exportQuickBtn = document.getElementById("exportQuickBtn");
 const backupBtn = document.getElementById("backupBtn");
+const backupQuickBtn = document.getElementById("backupQuickBtn");
 const selectFilteredBtn = document.getElementById("selectFilteredBtn");
+const selectQuickBtn = document.getElementById("selectQuickBtn");
 const deleteSelectedBtn = document.getElementById("deleteSelectedBtn");
+const deleteQuickBtn = document.getElementById("deleteQuickBtn");
 const notificationsBtn = document.getElementById("notificationsBtn");
 const xlsxInput = document.getElementById("xlsxInput");
 const saveGpsBtn = document.getElementById("saveGpsBtn");
@@ -359,14 +365,17 @@ function normalizePhoneNumber(phone) {
 
 function setPhoneLink(node, phone) {
   if (!node) return;
-  const cleanPhone = normalizePhoneNumber(phone);
+  const rawPhone = String(phone || "").trim();
+  const cleanPhone = normalizePhoneNumber(rawPhone);
   if (!cleanPhone) {
     node.classList.add("hidden");
     node.removeAttribute("href");
     node.onclick = null;
+    node.textContent = "";
     return;
   }
   node.href = `tel:${cleanPhone}`;
+  node.textContent = rawPhone;
   node.onclick = () => {
     window.location.href = node.href;
   };
@@ -850,11 +859,17 @@ searchInput.addEventListener("input", renderAll);
 clearSearchBtn.addEventListener("click", clearSearch);
 saveBtn.addEventListener("click", saveCurrentContact);
 newContactBtn.addEventListener("click", newContact);
+newContactQuickBtn?.addEventListener("click", () => newContactBtn.click());
 importXlsxBtn.addEventListener("click", () => xlsxInput.click());
+importQuickBtn?.addEventListener("click", () => importXlsxBtn.click());
 exportXlsxBtn.addEventListener("click", exportContactsXlsx);
+exportQuickBtn?.addEventListener("click", () => exportXlsxBtn.click());
 backupBtn.addEventListener("click", exportBackupJson);
+backupQuickBtn?.addEventListener("click", () => backupBtn.click());
 selectFilteredBtn.addEventListener("click", selectFilteredContacts);
+selectQuickBtn?.addEventListener("click", () => selectFilteredBtn.click());
 deleteSelectedBtn.addEventListener("click", deleteSelectedContacts);
+deleteQuickBtn?.addEventListener("click", () => deleteSelectedBtn.click());
 notificationsBtn.addEventListener("click", requestNotifications);
 saveGpsBtn.addEventListener("click", captureGps);
 openGpsBtn.addEventListener("click", openGpsLocation);
