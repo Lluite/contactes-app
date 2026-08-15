@@ -78,9 +78,11 @@ const MONTH_MAP = {
 };
 const now = new Date();
 const TODAY = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
+var desktopAPI = window.desktopAPI || null;
+var isDesktopApp = Boolean(desktopAPI?.isDesktopApp);
 
 const state = {
-  contacts: loadContacts(),
+  contacts: [],
   selectedId: null,
   selectedIds: new Set(),
   activeLetter: "",
@@ -109,6 +111,9 @@ const openGpsBtn = document.getElementById("openGpsBtn");
 const gpsStatus = document.getElementById("gpsStatus");
 const mail1Link = document.getElementById("mail1Link");
 const mail2Link = document.getElementById("mail2Link");
+const phoneWorkLink = document.getElementById("phoneWorkLink");
+const phoneHomeLink = document.getElementById("phoneHomeLink");
+const phoneMobileLink = document.getElementById("phoneMobileLink");
 const uploadPhotoBtn = document.getElementById("uploadPhotoBtn");
 const photoInput = document.getElementById("photoInput");
 const contactPhotoImage = document.getElementById("contactPhotoImage");
@@ -119,7 +124,15 @@ const backToListBtn = document.getElementById("backToListBtn");
 const closeEditorBtn = document.getElementById("closeEditorBtn");
 const deleteContactBtn = document.getElementById("deleteContactBtn");
 
-function loadContacts() {
+async function loadContacts() {
+  if (isDesktopApp) {
+    try {
+      const parsed = await desktopAPI.loadContacts();
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      console.error("No he pogut llegir els contactes locals del PC.", error);
+    }
+  }
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return [];
   try {
@@ -130,7 +143,17 @@ function loadContacts() {
   }
 }
 
-function saveContacts() {
+async function saveContacts() {
+  if (isDesktopApp) {
+    try {
+      await desktopAPI.saveContacts(state.contacts);
+      return;
+    } catch (error) {
+      console.error("No he pogut guardar els contactes locals del PC.", error);
+      alert("No he pogut guardar els contactes a la carpeta privada del PC.");
+      return;
+    }
+  }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state.contacts));
 }
 
@@ -147,7 +170,7 @@ function safeFileName(name) {
 }
 
 function createEmptyContact() {
-  const contact = { id: crypto.randomUUID(), createdAt: new Date().toISOString(), photoData: "" };
+  const contact = { id: crypto.randomUUID(), createdAt: new Date().toISOString(), photoData: "", photoPath: "" };
   for (const key of FIELD_ORDER) contact[key] = "";
   return contact;
 }
@@ -176,7 +199,15 @@ function renderPhotoPreview(photoData, name = "") {
 }
 
 function openEditor() {
-  renderSelectedContact();
+  try {
+    renderSelectedContact();
+  } catch (error) {
+    console.error("No he pogut preparar la fitxa del contacte.", error);
+    editorTitle.textContent = "Nou contacte";
+    contactForm.reset();
+    gpsStatus.textContent = "";
+    renderPhotoPreview("", "");
+  }
   editorOverlay.classList.remove("hidden");
   editorOverlay.setAttribute("aria-hidden", "false");
 }
@@ -308,18 +339,46 @@ function renderSelectedContact() {
 }
 
 function setMailLink(node, email) {
+  if (!node) return;
   if (!email) {
     node.classList.add("hidden");
     node.removeAttribute("href");
+    node.onclick = null;
     return;
   }
   node.href = `mailto:${email}`;
+  node.onclick = () => {
+    window.location.href = node.href;
+  };
+  node.classList.remove("hidden");
+}
+
+function normalizePhoneNumber(phone) {
+  return String(phone || "").trim().replace(/[^\d+]/g, "");
+}
+
+function setPhoneLink(node, phone) {
+  if (!node) return;
+  const cleanPhone = normalizePhoneNumber(phone);
+  if (!cleanPhone) {
+    node.classList.add("hidden");
+    node.removeAttribute("href");
+    node.onclick = null;
+    return;
+  }
+  node.href = `tel:${cleanPhone}`;
+  node.onclick = () => {
+    window.location.href = node.href;
+  };
   node.classList.remove("hidden");
 }
 
 function updateMailLinks() {
   setMailLink(mail1Link, String(contactForm.elements.namedItem("mail1")?.value || "").trim());
   setMailLink(mail2Link, String(contactForm.elements.namedItem("mail2")?.value || "").trim());
+  setPhoneLink(phoneWorkLink, contactForm.elements.namedItem("phoneWork")?.value || "");
+  setPhoneLink(phoneHomeLink, contactForm.elements.namedItem("phoneHome")?.value || "");
+  setPhoneLink(phoneMobileLink, contactForm.elements.namedItem("phoneMobile")?.value || "");
 }
 
 function saveCurrentContact() {
@@ -337,18 +396,25 @@ function saveCurrentContact() {
   }
   contact.photoData = contact.photoData || "";
   contact.updatedAt = new Date().toISOString();
-  saveContacts();
+  void saveContacts();
   renderAll();
   closeEditor();
 }
 
 function newContact() {
-  const contact = createEmptyContact();
-  state.contacts.unshift(contact);
-  state.selectedId = contact.id;
-  saveContacts();
-  renderAll();
-  openEditor();
+  try {
+    const contact = createEmptyContact();
+    state.contacts.unshift(contact);
+    state.selectedId = contact.id;
+    void saveContacts();
+    renderAll();
+    openEditor();
+  } catch (error) {
+    console.error("No he pogut crear un nou contacte.", error);
+    alert(`No he pogut obrir el nou registre: ${error.message}`);
+    editorOverlay.classList.remove("hidden");
+    editorOverlay.setAttribute("aria-hidden", "false");
+  }
 }
 
 function deleteCurrentContact() {
@@ -358,7 +424,7 @@ function deleteCurrentContact() {
   state.contacts = state.contacts.filter((item) => item.id !== contact.id);
   state.selectedIds.delete(contact.id);
   state.selectedId = state.contacts[0]?.id || null;
-  saveContacts();
+  void saveContacts();
   renderAll();
   closeEditor();
 }
@@ -377,7 +443,7 @@ function deleteSelectedContacts() {
   state.contacts = state.contacts.filter((contact) => !state.selectedIds.has(contact.id));
   state.selectedIds.clear();
   if (state.selectedId && !state.contacts.some((contact) => contact.id === state.selectedId)) state.selectedId = state.contacts[0]?.id || null;
-  saveContacts();
+  void saveContacts();
   renderAll();
   if (!state.selectedId) closeEditor();
 }
@@ -393,11 +459,23 @@ function handlePhotoSelected(event) {
   const contact = selectedContact();
   if (!contact) return;
   const reader = new FileReader();
-  reader.onload = () => {
-    contact.photoData = String(reader.result || "");
-    saveContacts();
-    renderSelectedContact();
-    renderContactList();
+  reader.onload = async () => {
+    const loadedData = String(reader.result || "");
+    try {
+      if (isDesktopApp && desktopAPI?.savePhotoDataUrl) {
+        const savedPhoto = await desktopAPI.savePhotoDataUrl(loadedData, file.name || contact.name || "foto");
+        contact.photoData = savedPhoto.photoUrl;
+        contact.photoPath = savedPhoto.photoPath;
+      } else {
+        contact.photoData = loadedData;
+        contact.photoPath = "";
+      }
+      void saveContacts();
+      renderSelectedContact();
+      renderContactList();
+    } catch (error) {
+      alert(`No he pogut guardar la foto: ${error.message}`);
+    }
   };
   reader.readAsDataURL(file);
   photoInput.value = "";
@@ -594,7 +672,16 @@ function formatDateForFile(date) {
 }
 
 function exportBackupJson() {
-  const blob = new Blob([JSON.stringify(state.contacts, null, 2)], { type: "application/json;charset=utf-8" });
+  const payload = JSON.stringify(state.contacts, null, 2);
+  if (isDesktopApp && desktopAPI?.saveBackupJson) {
+    desktopAPI.saveBackupJson(payload).then((targetPath) => {
+      alert(`Copia de seguretat guardada a:\n${targetPath}`);
+    }).catch((error) => {
+      alert(`No he pogut guardar la copia de seguretat: ${error.message}`);
+    });
+    return;
+  }
+  const blob = new Blob([payload], { type: "application/json;charset=utf-8" });
   downloadBlob(blob, `contactes-backup-${safeFileName(formatDateForFile(new Date()))}.json`);
 }
 
@@ -718,7 +805,7 @@ async function importContactsFromFile(file) {
   if (rows.length < 2) {
     state.contacts = [];
     state.selectedId = null;
-    saveContacts();
+    await saveContacts();
     renderAll();
     return;
   }
@@ -726,12 +813,12 @@ async function importContactsFromFile(file) {
   state.contacts = rows.slice(1).map((row) => mapImportedRow(headers, row)).filter((contact) => contact.name);
   state.selectedId = state.contacts[0]?.id || null;
   state.selectedIds.clear();
-  saveContacts();
+  await saveContacts();
   renderAll();
 }
 
 function registerServiceWorker() {
-  if ("serviceWorker" in navigator) {
+  if (!isDesktopApp && "serviceWorker" in navigator) {
     navigator.serviceWorker.register("./service-worker.js").then((registration) => registration.update().catch(() => {})).catch(() => {});
   }
 }
@@ -751,7 +838,8 @@ function renderAll() {
   if (!editorOverlay.classList.contains("hidden")) renderSelectedContact();
 }
 
-function init() {
+async function init() {
+  state.contacts = await loadContacts();
   notificationsBtn.textContent = findStatus();
   renderAll();
   registerServiceWorker();
@@ -796,4 +884,7 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !editorOverlay.classList.contains("hidden")) closeEditor();
 });
 
-init();
+init().catch((error) => {
+  console.error(error);
+  alert(`No he pogut iniciar l'app: ${error.message}`);
+});

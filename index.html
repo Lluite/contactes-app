@@ -7,8 +7,9 @@
     <meta name="theme-color" content="#0f3568">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <link rel="manifest" href="./manifest.webmanifest?v=10">
-    <link rel="stylesheet" href="./styles.css?v=10">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+    <link rel="manifest" href="./manifest.webmanifest?v=11">
+    <link rel="stylesheet" href="./styles.css?v=11">
   </head>
   <body>
     <div class="page-shell">
@@ -123,7 +124,7 @@
           </div>
         </div>
 
-        <form id="contactForm" class="contact-form">
+        <form id="contactForm" class="contact-form" autocomplete="off">
           <section class="photo-card full">
             <div class="photo-card-head">
               <div>
@@ -155,23 +156,23 @@
               <input name="group" type="text" list="groupOptions">
             </label>
 
-            <label class="field-card">
+            <div class="field-card action-field-card">
               <span>Telf. Treball</span>
               <input name="phoneWork" type="tel">
-              <a id="phoneWorkLink" class="mail-link hidden" href="#" target="_self">Llamar</a>
-            </label>
+              <a id="phoneWorkLink" class="action-link hidden" href="#">Llamar</a>
+            </div>
 
-            <label class="field-card">
+            <div class="field-card action-field-card">
               <span>Telf. Casa</span>
               <input name="phoneHome" type="tel">
-              <a id="phoneHomeLink" class="mail-link hidden" href="#" target="_self">Llamar</a>
-            </label>
+              <a id="phoneHomeLink" class="action-link hidden" href="#">Llamar</a>
+            </div>
 
-            <label class="field-card">
+            <div class="field-card action-field-card">
               <span>Telf. Mobil</span>
               <input name="phoneMobile" type="tel">
-              <a id="phoneMobileLink" class="mail-link hidden" href="#" target="_self">Llamar</a>
-            </label>
+              <a id="phoneMobileLink" class="action-link hidden" href="#">Llamar</a>
+            </div>
 
             <label class="field-card">
               <span>Tipus telf. Mobil</span>
@@ -181,7 +182,7 @@
             <div class="field-card date-card">
               <label>
                 <span>Data 1</span>
-                <input name="date1" type="text" placeholder="27/10/1957, 27-10-1957 o 27 de octubre de 1957">
+                <input name="date1" type="text" autocomplete="off">
               </label>
               <label>
                 <span>Tipus data 1</span>
@@ -226,17 +227,17 @@
               <p id="date4Info" class="date-info"></p>
             </div>
 
-            <label class="field-card">
+            <div class="field-card action-field-card">
               <span>Mail 1</span>
               <input name="mail1" type="email">
-              <a id="mail1Link" class="mail-link hidden" href="#" target="_self">Abrir correo</a>
-            </label>
+              <a id="mail1Link" class="action-link hidden" href="#">Abrir correo</a>
+            </div>
 
-            <label class="field-card">
+            <div class="field-card action-field-card">
               <span>Mail 2</span>
               <input name="mail2" type="email">
-              <a id="mail2Link" class="mail-link hidden" href="#" target="_self">Abrir correo</a>
-            </label>
+              <a id="mail2Link" class="action-link hidden" href="#">Abrir correo</a>
+            </div>
 
             <label class="field-card full">
               <span>Adreca</span>
@@ -264,13 +265,14 @@
               <div class="gps-grid">
                 <label>
                   <span>Latitud</span>
-                  <input name="gpsLat" type="text" placeholder="41.3874">
+                  <input name="gpsLat" type="text" autocomplete="off">
                 </label>
                 <label>
                   <span>Longitud</span>
-                  <input name="gpsLng" type="text" placeholder="2.1686">
+                  <input name="gpsLng" type="text" autocomplete="off">
                 </label>
               </div>
+              <p class="subtle gps-help">Pots escriure les coordenades manualment o capturar-les amb el boto de GPS.</p>
               <p id="gpsStatus" class="subtle"></p>
             </div>
           </div>
@@ -301,6 +303,6 @@
     </datalist>
 
     <script src="./jszip.min.js"></script>
-    <script src="./app.js?v=10"></script>
+    <script src="./app.js?v=11"></script>
   </body>
 </html>
