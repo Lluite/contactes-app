@@ -798,7 +798,6 @@ input:focus {
     display: none;
   }
 
-  .directory-header,
   .directory-title-row,
   .section-head,
   .panel-head,
@@ -834,20 +833,34 @@ input:focus {
   }
 
   .directory-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 118px;
     gap: 12px;
-  }
-
-  .directory-header-tools {
     align-items: stretch;
   }
 
-  .tools-menu-wrap,
-  .tools-menu-btn {
-    width: 100%;
+  .directory-header-copy {
+    min-height: 84px;
+    padding: 6px 0;
+  }
+
+  .directory-header-tools {
+    display: contents;
+  }
+
+  .stats-card {
+    grid-column: 1 / -1;
+  }
+
+  .tools-menu-wrap {
+    width: 118px;
   }
 
   .tools-menu-btn {
-    min-height: 52px;
+    width: 100%;
+    min-height: 84px;
+    border-radius: 20px;
+    font-size: 1rem;
   }
 
   .tools-menu-panel {
