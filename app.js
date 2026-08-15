@@ -371,11 +371,9 @@ function setPhoneLink(node, phone) {
     node.classList.add("hidden");
     node.removeAttribute("href");
     node.onclick = null;
-    node.textContent = "";
     return;
   }
   node.href = `tel:${cleanPhone}`;
-  node.textContent = rawPhone;
   node.onclick = () => {
     window.location.href = node.href;
   };

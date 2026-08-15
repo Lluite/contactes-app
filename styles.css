@@ -565,6 +565,14 @@ input:focus {
   position: relative;
 }
 
+.inline-action-wrap {
+  position: relative;
+}
+
+.inline-action-wrap input {
+  padding-right: 102px;
+}
+
 .mail-link,
 .action-link {
   color: var(--brand);
@@ -574,18 +582,29 @@ input:focus {
   padding: 2px 0 0;
 }
 
-.phone-link {
+.inline-action-btn {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
-  min-height: 40px;
-  padding: 10px 14px;
-  border-radius: 12px;
-  background: linear-gradient(180deg, #f6faff, #eef4fb);
-  border: 1px solid var(--border);
+  justify-content: center;
+  min-width: 82px;
+  min-height: 36px;
+  padding: 8px 12px;
+  border-radius: 11px;
+  background: linear-gradient(145deg, #173b64, #37689d);
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 10px 20px rgba(23, 59, 100, 0.16);
 }
 
 .mail-link:hover,
-.action-link:hover {
+.action-link:hover,
+.inline-action-btn:hover {
   text-decoration: underline;
 }
 

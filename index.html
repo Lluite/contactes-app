@@ -8,8 +8,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
-    <link rel="manifest" href="./manifest.webmanifest?v=12">
-    <link rel="stylesheet" href="./styles.css?v=12">
+    <link rel="manifest" href="./manifest.webmanifest?v=13">
+    <link rel="stylesheet" href="./styles.css?v=13">
   </head>
   <body>
     <div class="page-shell">
@@ -167,20 +167,26 @@
 
             <div class="field-card action-field-card">
               <span>Telf. Treball</span>
-              <input name="phoneWork" type="tel">
-              <a id="phoneWorkLink" class="action-link phone-link hidden" href="#"></a>
+              <div class="inline-action-wrap">
+                <input name="phoneWork" type="tel">
+                <a id="phoneWorkLink" class="inline-action-btn hidden" href="#" aria-label="Llamar al telefono de trabajo">Llamar</a>
+              </div>
             </div>
 
             <div class="field-card action-field-card">
               <span>Telf. Casa</span>
-              <input name="phoneHome" type="tel">
-              <a id="phoneHomeLink" class="action-link phone-link hidden" href="#"></a>
+              <div class="inline-action-wrap">
+                <input name="phoneHome" type="tel">
+                <a id="phoneHomeLink" class="inline-action-btn hidden" href="#" aria-label="Llamar al telefono de casa">Llamar</a>
+              </div>
             </div>
 
             <div class="field-card action-field-card">
               <span>Telf. Mobil</span>
-              <input name="phoneMobile" type="tel">
-              <a id="phoneMobileLink" class="action-link phone-link hidden" href="#"></a>
+              <div class="inline-action-wrap">
+                <input name="phoneMobile" type="tel">
+                <a id="phoneMobileLink" class="inline-action-btn hidden" href="#" aria-label="Llamar al movil">Llamar</a>
+              </div>
             </div>
 
             <label class="field-card">
@@ -312,6 +318,6 @@
     </datalist>
 
     <script src="./jszip.min.js"></script>
-    <script src="./app.js?v=12"></script>
+    <script src="./app.js?v=13"></script>
   </body>
 </html>
