@@ -1,10 +1,10 @@
-const CACHE_NAME = "contactes-app-v18";
+const CACHE_NAME = "contactes-app-v19";
 const APP_FILES = [
   "./",
-  "./index.html?v=18",
-  "./styles.css?v=18",
-  "./app.js?v=18",
-  "./manifest.webmanifest?v=18",
+  "./index.html?v=19",
+  "./styles.css?v=19",
+  "./app.js?v=19",
+  "./manifest.webmanifest?v=19",
   "./robots.txt",
   "./jszip.min.js",
   "./office-desk-premium.png",
