@@ -116,6 +116,7 @@ const selectQuickBtn = document.getElementById("selectQuickBtn");
 const deleteSelectedBtn = document.getElementById("deleteSelectedBtn");
 const deleteQuickBtn = document.getElementById("deleteQuickBtn");
 const openDatesCalendarBtn = document.getElementById("openDatesCalendarBtn");
+const openDatesCalendarQuickBtn = document.getElementById("openDatesCalendarQuickBtn");
 const xlsxInput = document.getElementById("xlsxInput");
 const saveGpsBtn = document.getElementById("saveGpsBtn");
 const openGpsBtn = document.getElementById("openGpsBtn");
@@ -1061,6 +1062,7 @@ saveBtn.addEventListener("click", () => {
 newContactBtn.addEventListener("click", newContact);
 newContactTopBtn?.addEventListener("click", () => newContactBtn.click());
 openDatesCalendarBtn?.addEventListener("click", openDatesCalendar);
+openDatesCalendarQuickBtn?.addEventListener("click", openDatesCalendar);
 toolsMenuBtn?.addEventListener("click", (event) => {
   event.stopPropagation();
   toggleToolsMenu();
