@@ -281,26 +281,29 @@ function discardEditorChanges() {
   state.editorIsNew = false;
 }
 
-function shouldCloseEditor() {
+async function shouldCloseEditor() {
   const hasUnsaved = syncEditorDirtyState();
   if (!hasUnsaved) {
     if (state.editorIsNew) discardEditorChanges();
     return true;
   }
   if (window.confirm("Has fet canvis. Vols guardar-los abans de sortir?")) {
-    saveCurrentContact();
-    return false;
+    await saveCurrentContact(false);
+    return true;
   }
   return window.confirm("Vols sortir sense guardar els canvis?");
 }
 
-function closeEditor(force = false) {
-  if (!force && !shouldCloseEditor()) return;
+async function closeEditor(force = false) {
+  if (!force && !(await shouldCloseEditor())) return;
   editorOverlay.classList.add("hidden");
   editorOverlay.setAttribute("aria-hidden", "true");
   if (force) {
     state.editorDirty = false;
     state.editorIsNew = false;
+    state.editorOriginalSnapshot = "";
+  } else {
+    discardEditorChanges();
   }
   renderAll();
 }
@@ -471,7 +474,7 @@ function updateMailLinks() {
   setPhoneLink(phoneMobileLink, contactForm.elements.namedItem("phoneMobile")?.value || "");
 }
 
-async function saveCurrentContact() {
+async function saveCurrentContact(closeAfterSave = true) {
   const formData = new FormData(contactForm);
   let contact = selectedContact();
   if (!contact) {
@@ -490,7 +493,7 @@ async function saveCurrentContact() {
   state.editorIsNew = false;
   markEditorClean(contact);
   renderAll();
-  closeEditor(true);
+  if (closeAfterSave) await closeEditor(true);
 }
 
 function newContact() {
@@ -940,7 +943,9 @@ async function init() {
 
 searchInput.addEventListener("input", renderAll);
 clearSearchBtn.addEventListener("click", clearSearch);
-saveBtn.addEventListener("click", saveCurrentContact);
+saveBtn.addEventListener("click", () => {
+  void saveCurrentContact();
+});
 newContactBtn.addEventListener("click", newContact);
 newContactTopBtn?.addEventListener("click", () => newContactBtn.click());
 toolsMenuBtn?.addEventListener("click", (event) => {
@@ -962,10 +967,16 @@ saveGpsBtn.addEventListener("click", captureGps);
 openGpsBtn.addEventListener("click", openGpsLocation);
 uploadPhotoBtn.addEventListener("click", uploadPhoto);
 photoInput.addEventListener("change", handlePhotoSelected);
-backToListBtn.addEventListener("click", closeEditor);
-closeEditorBtn.addEventListener("click", closeEditor);
+backToListBtn.addEventListener("click", () => {
+  void closeEditor();
+});
+closeEditorBtn.addEventListener("click", () => {
+  void closeEditor();
+});
 deleteContactBtn.addEventListener("click", deleteCurrentContact);
-editorBackdrop.addEventListener("click", closeEditor);
+editorBackdrop.addEventListener("click", () => {
+  void closeEditor();
+});
 contactForm.addEventListener("input", formChanged);
 contactForm.addEventListener("submit", (event) => {
   event.preventDefault();
