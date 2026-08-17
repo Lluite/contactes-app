@@ -344,6 +344,13 @@ function filteredContacts() {
     if (!query) return true;
     const haystack = normalize([contact.name, contact.group, contact.phoneMobile, contact.phoneWork, contact.phoneHome, contact.mail1, contact.mail2, contact.city].join(" "));
     return haystack.includes(query);
+  }).sort((a, b) => {
+    const nameA = normalize(a.name || "");
+    const nameB = normalize(b.name || "");
+    if (!nameA && !nameB) return 0;
+    if (!nameA) return 1;
+    if (!nameB) return -1;
+    return nameA.localeCompare(nameB, "ca");
   });
 }
 
