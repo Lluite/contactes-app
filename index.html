@@ -10,8 +10,8 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
     <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
     <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
-    <link rel="manifest" href="./manifest.webmanifest?v=26">
-    <link rel="stylesheet" href="./styles.css?v=26">
+    <link rel="manifest" href="./manifest.webmanifest?v=33">
+    <link rel="stylesheet" href="./styles.css?v=33">
   </head>
   <body>
     <div class="page-shell">
@@ -105,6 +105,7 @@
 
           <div class="action-grid">
             <button id="newContactBtn" class="primary-btn hidden-action-anchor" type="button">Nou registre</button>
+            <button id="openDatesCalendarBtn" class="secondary-btn" type="button">Calendari de dates</button>
             <button id="importXlsxBtn" class="secondary-btn" type="button">Importar XLSX</button>
             <button id="exportXlsxBtn" class="secondary-btn" type="button">Exportar XLSX</button>
             <button id="backupBtn" class="secondary-btn" type="button">Copia de seguretat</button>
@@ -298,6 +299,25 @@
       </section>
     </div>
 
+    <div id="datesCalendarOverlay" class="overlay hidden" aria-hidden="true">
+      <div id="datesCalendarBackdrop" class="overlay-backdrop"></div>
+      <section class="calendar-modal" role="dialog" aria-modal="true" aria-labelledby="datesCalendarTitle">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Consulta</p>
+            <h2 id="datesCalendarTitle">Calendari de dates</h2>
+          </div>
+          <div class="panel-actions">
+            <button id="closeDatesCalendarBtn" class="ghost-btn" type="button">Tancar</button>
+          </div>
+        </div>
+        <p class="subtle calendar-intro">
+          Vista completa de totes les dates guardades, ordenades per mesos per consultar l'any sencer amb calma.
+        </p>
+        <div id="datesCalendarContent" class="calendar-content"></div>
+      </section>
+    </div>
+
     <datalist id="groupOptions">
       <option value="Familia"></option>
       <option value="Personal"></option>
@@ -321,6 +341,6 @@
     </datalist>
 
     <script src="./jszip.min.js"></script>
-    <script src="./app.js?v=26"></script>
+    <script src="./app.js?v=33"></script>
   </body>
 </html>

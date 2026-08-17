@@ -115,6 +115,7 @@ const selectFilteredBtn = document.getElementById("selectFilteredBtn");
 const selectQuickBtn = document.getElementById("selectQuickBtn");
 const deleteSelectedBtn = document.getElementById("deleteSelectedBtn");
 const deleteQuickBtn = document.getElementById("deleteQuickBtn");
+const openDatesCalendarBtn = document.getElementById("openDatesCalendarBtn");
 const xlsxInput = document.getElementById("xlsxInput");
 const saveGpsBtn = document.getElementById("saveGpsBtn");
 const openGpsBtn = document.getElementById("openGpsBtn");
@@ -133,6 +134,10 @@ const editorBackdrop = document.getElementById("editorBackdrop");
 const backToListBtn = document.getElementById("backToListBtn");
 const closeEditorBtn = document.getElementById("closeEditorBtn");
 const deleteContactBtn = document.getElementById("deleteContactBtn");
+const datesCalendarOverlay = document.getElementById("datesCalendarOverlay");
+const datesCalendarBackdrop = document.getElementById("datesCalendarBackdrop");
+const closeDatesCalendarBtn = document.getElementById("closeDatesCalendarBtn");
+const datesCalendarContent = document.getElementById("datesCalendarContent");
 
 async function loadContacts() {
   if (isDesktopApp) {
@@ -719,6 +724,93 @@ function renderReminders() {
   reminderList.appendChild(fragment);
 }
 
+function collectAllDatesByMonth() {
+  const grouped = new Map();
+  for (const contact of state.contacts) {
+    for (let index = 1; index <= 4; index += 1) {
+      const rawDate = contact[`date${index}`];
+      const parts = parseDateText(rawDate);
+      if (!parts) continue;
+      const month = parts.month;
+      if (!grouped.has(month)) grouped.set(month, []);
+      grouped.get(month).push({
+        contactName: contact.name || "Sense nom",
+        type: contact[`date${index}Type`] || `Data ${index}`,
+        label: formatDateLong(rawDate),
+        detail: describeDate(rawDate, ""),
+        day: parts.day,
+        month,
+      });
+    }
+  }
+  const currentMonth = TODAY.getMonth() + 1;
+  return [...grouped.entries()]
+    .sort((a, b) => {
+      const offsetA = (a[0] - currentMonth + 12) % 12;
+      const offsetB = (b[0] - currentMonth + 12) % 12;
+      return offsetA - offsetB;
+    })
+    .map(([month, items]) => ({
+      month,
+      monthName: MONTH_NAMES[month - 1],
+      items: items.sort((a, b) => {
+        if (a.day !== b.day) return a.day - b.day;
+        return a.contactName.localeCompare(b.contactName, "ca");
+      }),
+    }));
+}
+
+function dateTypeClass(type) {
+  const normalized = normalize(type || "");
+  if (normalized.includes("anivers")) return "anniversary";
+  if (normalized.includes("santoral")) return "saint";
+  if (normalized.includes("noces")) return "wedding";
+  if (normalized.includes("traspas")) return "memorial";
+  return "other";
+}
+
+function renderDatesCalendar() {
+  const groups = collectAllDatesByMonth();
+  datesCalendarContent.innerHTML = "";
+  if (!groups.length) {
+    datesCalendarContent.innerHTML = `<div class="empty-state">Encara no hi ha dates guardades per mostrar en el calendari.</div>`;
+    return;
+  }
+  const fragment = document.createDocumentFragment();
+  groups.forEach((group, index) => {
+    const card = document.createElement("details");
+    card.className = "calendar-month-card";
+    if (index === 0) card.open = true;
+    const listHtml = group.items.map((item) => `
+      <article class="calendar-date-row">
+        <strong>${escapeHtml(item.contactName)}</strong>
+        <span>${escapeHtml(item.label)}</span>
+        <span class="calendar-type-badge ${dateTypeClass(item.type)}"><strong>${escapeHtml(item.type)}</strong>${item.detail ? `<span>${escapeHtml(item.detail)}</span>` : ""}</span>
+      </article>
+    `).join("");
+    card.innerHTML = `
+      <summary class="calendar-month-summary">
+        <h3>${escapeHtml(group.monthName)}</h3>
+        <span class="calendar-month-count">${group.items.length}</span>
+      </summary>
+      <div class="calendar-month-list">${listHtml}</div>
+    `;
+    fragment.appendChild(card);
+  });
+  datesCalendarContent.appendChild(fragment);
+}
+
+function openDatesCalendar() {
+  renderDatesCalendar();
+  datesCalendarOverlay.classList.remove("hidden");
+  datesCalendarOverlay.setAttribute("aria-hidden", "false");
+}
+
+function closeDatesCalendar() {
+  datesCalendarOverlay.classList.add("hidden");
+  datesCalendarOverlay.setAttribute("aria-hidden", "true");
+}
+
 async function notifyTodayReminders() {
   if (!("Notification" in window) || Notification.permission !== "granted") return;
   const dayKey = formatDateForFile(TODAY);
@@ -968,6 +1060,7 @@ saveBtn.addEventListener("click", () => {
 });
 newContactBtn.addEventListener("click", newContact);
 newContactTopBtn?.addEventListener("click", () => newContactBtn.click());
+openDatesCalendarBtn?.addEventListener("click", openDatesCalendar);
 toolsMenuBtn?.addEventListener("click", (event) => {
   event.stopPropagation();
   toggleToolsMenu();
@@ -997,6 +1090,8 @@ deleteContactBtn.addEventListener("click", deleteCurrentContact);
 editorBackdrop.addEventListener("click", () => {
   void closeEditor();
 });
+closeDatesCalendarBtn?.addEventListener("click", closeDatesCalendar);
+datesCalendarBackdrop?.addEventListener("click", closeDatesCalendar);
 contactForm.addEventListener("input", formChanged);
 contactForm.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -1015,6 +1110,7 @@ xlsxInput.addEventListener("change", async (event) => {
 });
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !editorOverlay.classList.contains("hidden")) closeEditor();
+  if (event.key === "Escape" && !datesCalendarOverlay.classList.contains("hidden")) closeDatesCalendar();
   if (event.key === "Escape") closeToolsMenu();
 });
 document.addEventListener("click", () => closeToolsMenu());
