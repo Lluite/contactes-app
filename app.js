@@ -675,17 +675,21 @@ function collectReminders() {
       const parts = parseDateText(contact[`date${index}`]);
       if (!parts) continue;
       const daysAway = diffDays(TODAY, nextOccurrence(parts));
-      if (daysAway !== 0) continue;
+      if (daysAway < 0 || daysAway > 15) continue;
       reminders.push({
         id: `${contact.id}-${index}`,
         contactName: contact.name || "Sense nom",
         type: contact[`date${index}Type`] || `Data ${index}`,
         label: formatDateLong(contact[`date${index}`]),
         age: parts.hasYear ? nextOccurrence(parts).getFullYear() - parts.year : 0,
+        daysAway,
       });
     }
   }
-  return reminders.sort((a, b) => a.contactName.localeCompare(b.contactName));
+  return reminders.sort((a, b) => {
+    if (a.daysAway !== b.daysAway) return a.daysAway - b.daysAway;
+    return a.contactName.localeCompare(b.contactName, "ca");
+  });
 }
 
 function renderReminders() {
@@ -693,14 +697,23 @@ function renderReminders() {
   upcomingCount.textContent = String(reminders.length);
   reminderList.innerHTML = "";
   if (!reminders.length) {
-    reminderList.innerHTML = `<div class="empty-state">Avui no hi ha cap aniversari ni data important.</div>`;
+    reminderList.innerHTML = `<div class="empty-state">No hi ha cap data important per avui ni per als proxims 15 dies.</div>`;
     return;
   }
   const fragment = document.createDocumentFragment();
   for (const reminder of reminders) {
     const item = document.createElement("article");
-    item.className = "reminder-item today";
-    item.innerHTML = `<h3>${escapeHtml(reminder.contactName)} · ${escapeHtml(reminder.type)}</h3><p>${escapeHtml(reminder.label)} · Avui${reminder.age > 0 ? ` · ${reminder.age} anys` : ""}</p>`;
+    const whenText = reminder.daysAway === 0
+      ? "Avui"
+      : reminder.daysAway === 1
+        ? "Dema"
+        : `Falten ${reminder.daysAway} dies`;
+    item.className = `reminder-item${reminder.daysAway === 0 ? " today" : " upcoming"}`;
+    item.innerHTML = `
+      <h3>${escapeHtml(reminder.contactName)} · ${escapeHtml(reminder.type)}</h3>
+      <p>${escapeHtml(reminder.label)}${reminder.age > 0 ? ` · ${reminder.age} anys` : ""}</p>
+      <span class="reminder-badge">${escapeHtml(whenText)}</span>
+    `;
     fragment.appendChild(item);
   }
   reminderList.appendChild(fragment);
