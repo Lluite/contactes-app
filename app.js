@@ -89,6 +89,7 @@ const state = {
   editorDirty: false,
   editorIsNew: false,
   editorOriginalSnapshot: "",
+  returnToDuplicates: false,
 };
 
 const contactList = document.getElementById("contactList");
@@ -117,6 +118,8 @@ const deleteSelectedBtn = document.getElementById("deleteSelectedBtn");
 const deleteQuickBtn = document.getElementById("deleteQuickBtn");
 const openDatesCalendarBtn = document.getElementById("openDatesCalendarBtn");
 const openDatesCalendarQuickBtn = document.getElementById("openDatesCalendarQuickBtn");
+const openDuplicatesBtn = document.getElementById("openDuplicatesBtn");
+const openDuplicatesQuickBtn = document.getElementById("openDuplicatesQuickBtn");
 const xlsxInput = document.getElementById("xlsxInput");
 const saveGpsBtn = document.getElementById("saveGpsBtn");
 const openGpsBtn = document.getElementById("openGpsBtn");
@@ -139,6 +142,10 @@ const datesCalendarOverlay = document.getElementById("datesCalendarOverlay");
 const datesCalendarBackdrop = document.getElementById("datesCalendarBackdrop");
 const closeDatesCalendarBtn = document.getElementById("closeDatesCalendarBtn");
 const datesCalendarContent = document.getElementById("datesCalendarContent");
+const duplicatesOverlay = document.getElementById("duplicatesOverlay");
+const duplicatesBackdrop = document.getElementById("duplicatesBackdrop");
+const closeDuplicatesBtn = document.getElementById("closeDuplicatesBtn");
+const duplicatesContent = document.getElementById("duplicatesContent");
 
 async function loadContacts() {
   if (isDesktopApp) {
@@ -301,6 +308,7 @@ async function shouldCloseEditor() {
 }
 
 async function closeEditor(force = false) {
+  const reopenDuplicates = state.returnToDuplicates;
   if (!force && !(await shouldCloseEditor())) return;
   editorOverlay.classList.add("hidden");
   editorOverlay.setAttribute("aria-hidden", "true");
@@ -311,7 +319,9 @@ async function closeEditor(force = false) {
   } else {
     discardEditorChanges();
   }
+  state.returnToDuplicates = false;
   renderAll();
+  if (reopenDuplicates) openDuplicates();
 }
 
 function ensureSelectedContact() {
@@ -801,6 +811,86 @@ function renderDatesCalendar() {
   datesCalendarContent.appendChild(fragment);
 }
 
+function contactDisplayMeta(contact) {
+  return escapeHtml(contact.group || contact.phoneMobile || contact.phoneWork || contact.mail1 || "Sense detall");
+}
+
+function collectDuplicateGroups() {
+  const names = new Map();
+  const phones = new Map();
+  for (const contact of state.contacts) {
+    const normalizedName = normalize(contact.name);
+    if (normalizedName) {
+      if (!names.has(normalizedName)) names.set(normalizedName, []);
+      names.get(normalizedName).push(contact);
+    }
+    for (const key of ["phoneMobile", "phoneWork", "phoneHome"]) {
+      const cleanPhone = normalizePhoneNumber(contact[key]);
+      if (!cleanPhone) continue;
+      if (!phones.has(cleanPhone)) phones.set(cleanPhone, []);
+      phones.get(cleanPhone).push({ contact, source: key, raw: String(contact[key] || "").trim() });
+    }
+  }
+  const duplicateNames = [...names.entries()]
+    .filter(([, items]) => items.length > 1)
+    .sort((a, b) => a[0].localeCompare(b[0], "ca"));
+  const duplicatePhones = [...phones.entries()]
+    .filter(([, items]) => new Set(items.map((item) => item.contact.id)).size > 1)
+    .sort((a, b) => a[0].localeCompare(b[0], "ca"));
+  return { duplicateNames, duplicatePhones };
+}
+
+function renderDuplicates() {
+  const { duplicateNames, duplicatePhones } = collectDuplicateGroups();
+  duplicatesContent.innerHTML = "";
+  if (!duplicateNames.length && !duplicatePhones.length) {
+    duplicatesContent.innerHTML = `<div class="empty-state">No he trobat noms ni telefons repetits.</div>`;
+    return;
+  }
+  const blocks = [];
+  if (duplicateNames.length) {
+    const cards = duplicateNames.map(([name, items]) => `
+      <article class="duplicate-card">
+        <h3>Nom repetit: ${escapeHtml(items[0].name || name)}</h3>
+        <div class="duplicate-list">
+          ${items.map((contact) => `
+            <button type="button" class="duplicate-row" data-contact-id="${escapeHtml(contact.id)}">
+              <strong>${escapeHtml(contact.name || "Sense nom")}</strong>
+              <span>${contactDisplayMeta(contact)}</span>
+            </button>
+          `).join("")}
+        </div>
+      </article>
+    `).join("");
+    blocks.push(`<section class="duplicate-section"><h2>Noms repetits</h2>${cards}</section>`);
+  }
+  if (duplicatePhones.length) {
+    const cards = duplicatePhones.map(([phone, items]) => `
+      <article class="duplicate-card">
+        <h3>Telefon repetit: ${escapeHtml(items[0].raw || phone)}</h3>
+        <div class="duplicate-list">
+          ${items.map(({ contact, source, raw }) => `
+            <button type="button" class="duplicate-row" data-contact-id="${escapeHtml(contact.id)}">
+              <strong>${escapeHtml(contact.name || "Sense nom")}</strong>
+              <span>${escapeHtml(FIELD_LABELS[source] || source)} · ${escapeHtml(raw || phone)} · ${contactDisplayMeta(contact)}</span>
+            </button>
+          `).join("")}
+        </div>
+      </article>
+    `).join("");
+    blocks.push(`<section class="duplicate-section"><h2>Telefons repetits</h2>${cards}</section>`);
+  }
+  duplicatesContent.innerHTML = blocks.join("");
+  duplicatesContent.querySelectorAll("[data-contact-id]").forEach((node) => {
+    node.addEventListener("click", () => {
+      state.selectedId = node.getAttribute("data-contact-id");
+      state.returnToDuplicates = true;
+      closeDuplicates();
+      openEditor();
+    });
+  });
+}
+
 function openDatesCalendar() {
   renderDatesCalendar();
   datesCalendarOverlay.classList.remove("hidden");
@@ -810,6 +900,18 @@ function openDatesCalendar() {
 function closeDatesCalendar() {
   datesCalendarOverlay.classList.add("hidden");
   datesCalendarOverlay.setAttribute("aria-hidden", "true");
+}
+
+function openDuplicates() {
+  renderDuplicates();
+  duplicatesOverlay.classList.remove("hidden");
+  duplicatesOverlay.setAttribute("aria-hidden", "false");
+  closeToolsMenu();
+}
+
+function closeDuplicates() {
+  duplicatesOverlay.classList.add("hidden");
+  duplicatesOverlay.setAttribute("aria-hidden", "true");
 }
 
 async function notifyTodayReminders() {
@@ -1063,6 +1165,8 @@ newContactBtn.addEventListener("click", newContact);
 newContactTopBtn?.addEventListener("click", () => newContactBtn.click());
 openDatesCalendarBtn?.addEventListener("click", openDatesCalendar);
 openDatesCalendarQuickBtn?.addEventListener("click", openDatesCalendar);
+openDuplicatesBtn?.addEventListener("click", openDuplicates);
+openDuplicatesQuickBtn?.addEventListener("click", openDuplicates);
 toolsMenuBtn?.addEventListener("click", (event) => {
   event.stopPropagation();
   toggleToolsMenu();
@@ -1094,6 +1198,8 @@ editorBackdrop.addEventListener("click", () => {
 });
 closeDatesCalendarBtn?.addEventListener("click", closeDatesCalendar);
 datesCalendarBackdrop?.addEventListener("click", closeDatesCalendar);
+closeDuplicatesBtn?.addEventListener("click", closeDuplicates);
+duplicatesBackdrop?.addEventListener("click", closeDuplicates);
 contactForm.addEventListener("input", formChanged);
 contactForm.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -1113,6 +1219,7 @@ xlsxInput.addEventListener("change", async (event) => {
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !editorOverlay.classList.contains("hidden")) closeEditor();
   if (event.key === "Escape" && !datesCalendarOverlay.classList.contains("hidden")) closeDatesCalendar();
+  if (event.key === "Escape" && !duplicatesOverlay.classList.contains("hidden")) closeDuplicates();
   if (event.key === "Escape") closeToolsMenu();
 });
 document.addEventListener("click", () => closeToolsMenu());
