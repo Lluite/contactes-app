@@ -86,6 +86,9 @@ const state = {
   selectedId: null,
   selectedIds: new Set(),
   activeLetter: "",
+  editorDirty: false,
+  editorIsNew: false,
+  editorOriginalSnapshot: "",
 };
 
 const contactList = document.getElementById("contactList");
@@ -186,6 +189,40 @@ function selectedContact() {
   return state.contacts.find((contact) => contact.id === state.selectedId) || null;
 }
 
+function snapshotContact(contact) {
+  const base = {};
+  for (const key of FIELD_ORDER) base[key] = String(contact?.[key] || "");
+  base.photoData = String(contact?.photoData || "");
+  base.photoPath = String(contact?.photoPath || "");
+  return JSON.stringify(base);
+}
+
+function formSnapshot() {
+  const contact = selectedContact();
+  const draft = {};
+  for (const key of FIELD_ORDER) {
+    const raw = contactForm.elements.namedItem(key)?.value || "";
+    draft[key] = DATE_KEYS.includes(key) ? formatDateLong(raw) : String(raw).trim();
+  }
+  draft.photoData = String(contact?.photoData || "");
+  draft.photoPath = String(contact?.photoPath || "");
+  return JSON.stringify(draft);
+}
+
+function markEditorClean(contact) {
+  state.editorOriginalSnapshot = snapshotContact(contact);
+  state.editorDirty = false;
+}
+
+function syncEditorDirtyState() {
+  if (editorOverlay.classList.contains("hidden")) {
+    state.editorDirty = false;
+    return false;
+  }
+  state.editorDirty = formSnapshot() !== state.editorOriginalSnapshot;
+  return state.editorDirty;
+}
+
 function contactInitials(name) {
   const words = String(name || "").trim().split(/\s+/).filter(Boolean);
   if (!words.length) return "?";
@@ -220,9 +257,52 @@ function openEditor() {
   closeToolsMenu();
 }
 
-function closeEditor() {
+function restoreEditorOriginalState() {
+  const contact = selectedContact();
+  if (!contact || !state.editorOriginalSnapshot) return;
+  const original = JSON.parse(state.editorOriginalSnapshot);
+  for (const key of FIELD_ORDER) contact[key] = String(original[key] || "");
+  contact.photoData = String(original.photoData || "");
+  contact.photoPath = String(original.photoPath || "");
+}
+
+function discardEditorChanges() {
+  const contact = selectedContact();
+  if (state.editorIsNew) {
+    if (contact) {
+      state.contacts = state.contacts.filter((item) => item.id !== contact.id);
+      state.selectedIds.delete(contact.id);
+    }
+    state.selectedId = state.contacts[0]?.id || null;
+  } else {
+    restoreEditorOriginalState();
+  }
+  state.editorDirty = false;
+  state.editorIsNew = false;
+}
+
+function shouldCloseEditor() {
+  const hasUnsaved = syncEditorDirtyState();
+  if (!hasUnsaved) {
+    if (state.editorIsNew) discardEditorChanges();
+    return true;
+  }
+  if (window.confirm("Has fet canvis. Vols guardar-los abans de sortir?")) {
+    saveCurrentContact();
+    return false;
+  }
+  return window.confirm("Vols sortir sense guardar els canvis?");
+}
+
+function closeEditor(force = false) {
+  if (!force && !shouldCloseEditor()) return;
   editorOverlay.classList.add("hidden");
   editorOverlay.setAttribute("aria-hidden", "true");
+  if (force) {
+    state.editorDirty = false;
+    state.editorIsNew = false;
+  }
+  renderAll();
 }
 
 function ensureSelectedContact() {
@@ -344,6 +424,7 @@ function renderSelectedContact() {
   renderPhotoPreview(contact.photoData || "", contact.name || "");
   updateMailLinks();
   updateDateInfos();
+  markEditorClean(contact);
 }
 
 function setMailLink(node, email) {
@@ -390,7 +471,7 @@ function updateMailLinks() {
   setPhoneLink(phoneMobileLink, contactForm.elements.namedItem("phoneMobile")?.value || "");
 }
 
-function saveCurrentContact() {
+async function saveCurrentContact() {
   const formData = new FormData(contactForm);
   let contact = selectedContact();
   if (!contact) {
@@ -405,9 +486,11 @@ function saveCurrentContact() {
   }
   contact.photoData = contact.photoData || "";
   contact.updatedAt = new Date().toISOString();
-  void saveContacts();
+  await saveContacts();
+  state.editorIsNew = false;
+  markEditorClean(contact);
   renderAll();
-  closeEditor();
+  closeEditor(true);
 }
 
 function newContact() {
@@ -415,7 +498,7 @@ function newContact() {
     const contact = createEmptyContact();
     state.contacts.unshift(contact);
     state.selectedId = contact.id;
-    void saveContacts();
+    state.editorIsNew = true;
     renderAll();
     openEditor();
   } catch (error) {
@@ -479,9 +562,9 @@ function handlePhotoSelected(event) {
         contact.photoData = loadedData;
         contact.photoPath = "";
       }
-      void saveContacts();
-      renderSelectedContact();
+      renderPhotoPreview(contact.photoData || "", contactForm.elements.namedItem("name")?.value || "");
       renderContactList();
+      syncEditorDirtyState();
     } catch (error) {
       alert(`No he pogut guardar la foto: ${error.message}`);
     }
@@ -662,6 +745,7 @@ function formChanged() {
   updateDateInfos();
   const contact = selectedContact();
   if (contact) renderPhotoPreview(contact.photoData || "", contactForm.elements.namedItem("name")?.value || "");
+  syncEditorDirtyState();
 }
 
 function formatDateForFile(date) {
@@ -885,7 +969,7 @@ editorBackdrop.addEventListener("click", closeEditor);
 contactForm.addEventListener("input", formChanged);
 contactForm.addEventListener("submit", (event) => {
   event.preventDefault();
-  saveCurrentContact();
+  void saveCurrentContact();
 });
 xlsxInput.addEventListener("change", async (event) => {
   const [file] = event.target.files || [];
@@ -903,6 +987,12 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") closeToolsMenu();
 });
 document.addEventListener("click", () => closeToolsMenu());
+window.addEventListener("beforeunload", (event) => {
+  if (!editorOverlay.classList.contains("hidden") && syncEditorDirtyState()) {
+    event.preventDefault();
+    event.returnValue = "";
+  }
+});
 
 init().catch((error) => {
   console.error(error);
