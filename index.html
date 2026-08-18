@@ -10,8 +10,8 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
     <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
     <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
-    <link rel="manifest" href="./manifest.webmanifest?v=39">
-    <link rel="stylesheet" href="./styles.css?v=39">
+    <link rel="manifest" href="./manifest.webmanifest?v=47">
+    <link rel="stylesheet" href="./styles.css?v=47">
   </head>
   <body>
     <div class="page-shell">
@@ -40,7 +40,7 @@
             <p class="eyebrow">Directorio</p>
             <div class="title-with-version">
               <h2>Llista de contactes</h2>
-              <span class="app-version-pill">v39</span>
+              <span class="app-version-pill">v47</span>
             </div>
           </div>
 
@@ -150,7 +150,10 @@
                 <p class="eyebrow">Foto</p>
                 <h3>Imatge del contacte</h3>
               </div>
-              <button id="uploadPhotoBtn" class="secondary-btn" type="button">Afegir foto</button>
+              <div class="photo-head-actions">
+                <button id="deletePhotoBtn" class="ghost-btn" type="button">Esborrar foto</button>
+                <button id="uploadPhotoBtn" class="secondary-btn" type="button">Afegir foto</button>
+              </div>
             </div>
             <div class="photo-card-body">
               <div class="contact-photo-preview" id="contactPhotoPreview">
@@ -158,18 +161,16 @@
                 <span id="contactPhotoInitials">?</span>
               </div>
               <div class="photo-adjust-panel">
-                <label class="photo-adjust-label" for="photoPositionInput">Ajustar foto</label>
+                <label class="photo-adjust-label" for="photoZoomInput">Ajustar foto</label>
                 <div class="photo-adjust-grid">
-                  <label class="photo-adjust-axis" for="photoPositionXInput">
-                    <span>Esquerra / dreta</span>
-                    <input id="photoPositionXInput" class="photo-adjust-input" type="range" min="0" max="100" value="50">
+                  <label class="photo-adjust-axis" for="photoZoomInput">
+                    <span>Zoom</span>
+                    <input id="photoZoomInput" class="photo-adjust-input" type="range" min="100" max="220" value="100">
                   </label>
-                  <label class="photo-adjust-axis" for="photoPositionYInput">
-                    <span>Amunt / avall</span>
-                    <input id="photoPositionYInput" class="photo-adjust-input" type="range" min="0" max="100" value="50">
-                  </label>
+                  <input id="photoPositionXInput" type="hidden" value="50">
+                  <input id="photoPositionYInput" type="hidden" value="50">
                 </div>
-                <p class="subtle">Mou els dos controls fins que la cara quedi ben centrada.</p>
+                <p class="subtle">Arrossega la foto amb el ratolí o amb el dit per centrar-la. La roda del ratolí ajusta el zoom.</p>
               </div>
             </div>
             <input id="photoInput" type="file" accept="image/*" hidden>
@@ -382,6 +383,6 @@
     </datalist>
 
     <script src="./jszip.min.js"></script>
-    <script src="./app.js?v=39"></script>
+    <script src="./app.js?v=47"></script>
   </body>
 </html>

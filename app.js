@@ -133,9 +133,12 @@ const phoneWorkLink = document.getElementById("phoneWorkLink");
 const phoneHomeLink = document.getElementById("phoneHomeLink");
 const phoneMobileLink = document.getElementById("phoneMobileLink");
 const uploadPhotoBtn = document.getElementById("uploadPhotoBtn");
+const deletePhotoBtn = document.getElementById("deletePhotoBtn");
 const photoInput = document.getElementById("photoInput");
+const contactPhotoPreview = document.getElementById("contactPhotoPreview");
 const contactPhotoImage = document.getElementById("contactPhotoImage");
 const contactPhotoInitials = document.getElementById("contactPhotoInitials");
+const photoZoomInput = document.getElementById("photoZoomInput");
 const photoPositionXInput = document.getElementById("photoPositionXInput");
 const photoPositionYInput = document.getElementById("photoPositionYInput");
 const editorOverlay = document.getElementById("editorOverlay");
@@ -151,6 +154,8 @@ const duplicatesOverlay = document.getElementById("duplicatesOverlay");
 const duplicatesBackdrop = document.getElementById("duplicatesBackdrop");
 const closeDuplicatesBtn = document.getElementById("closeDuplicatesBtn");
 const duplicatesContent = document.getElementById("duplicatesContent");
+
+let photoDragState = null;
 
 async function loadContacts() {
   if (isDesktopApp) {
@@ -203,6 +208,7 @@ function createEmptyContact() {
     createdAt: new Date().toISOString(),
     photoData: "",
     photoPath: "",
+    photoZoom: 100,
     photoPositionX: 50,
     photoPositionY: 50,
   };
@@ -219,6 +225,7 @@ function snapshotContact(contact) {
   for (const key of FIELD_ORDER) base[key] = String(contact?.[key] || "");
   base.photoData = String(contact?.photoData || "");
   base.photoPath = String(contact?.photoPath || "");
+  base.photoZoom = Number.isFinite(Number(contact?.photoZoom)) ? Number(contact.photoZoom) : 100;
   base.photoPositionX = Number.isFinite(Number(contact?.photoPositionX)) ? Number(contact.photoPositionX) : 50;
   base.photoPositionY = Number.isFinite(Number(contact?.photoPositionY)) ? Number(contact.photoPositionY) : 50;
   return JSON.stringify(base);
@@ -233,6 +240,7 @@ function formSnapshot() {
   }
   draft.photoData = String(contact?.photoData || "");
   draft.photoPath = String(contact?.photoPath || "");
+  draft.photoZoom = Number(photoZoomInput?.value || 100);
   draft.photoPositionX = Number(photoPositionXInput?.value || 50);
   draft.photoPositionY = Number(photoPositionYInput?.value || 50);
   return JSON.stringify(draft);
@@ -264,17 +272,54 @@ function getPhotoPositionValue(value) {
   return Math.max(0, Math.min(100, numeric));
 }
 
-function applyPhotoPosition(positionX = 50, positionY = 50) {
-  const safeX = getPhotoPositionValue(positionX);
-  const safeY = getPhotoPositionValue(positionY);
-  if (photoPositionXInput) photoPositionXInput.value = String(safeX);
-  if (photoPositionYInput) photoPositionYInput.value = String(safeY);
-  contactPhotoImage.style.setProperty("--photo-x", `${safeX}%`);
-  contactPhotoImage.style.setProperty("--photo-y", `${safeY}%`);
+function getPhotoZoomValue(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return 100;
+  return Math.max(100, Math.min(220, numeric));
 }
 
-function renderPhotoPreview(photoData, name = "", photoPositionX = 50, photoPositionY = 50) {
-  applyPhotoPosition(photoPositionX, photoPositionY);
+function buildPhotoObjectPosition(positionX = 50, positionY = 50) {
+  const safeX = getPhotoPositionValue(positionX);
+  const safeY = getPhotoPositionValue(positionY);
+  return `${safeX}% ${safeY}%`;
+}
+
+function buildPhotoTransform(zoom = 100) {
+  const safeZoom = getPhotoZoomValue(zoom);
+  return `scale(${safeZoom / 100})`;
+}
+
+function buildEditorPhotoTransform(positionX = 50, positionY = 50, zoom = 100) {
+  const safeX = getPhotoPositionValue(positionX);
+  const safeY = getPhotoPositionValue(positionY);
+  const safeZoom = getPhotoZoomValue(zoom);
+  const moveX = ((safeX - 50) / 50) * 56;
+  const moveY = ((safeY - 50) / 50) * 56;
+  return `translate(${moveX}px, ${moveY}px) scale(${safeZoom / 100})`;
+}
+
+function buildListPhotoTransform(positionX = 50, positionY = 50, zoom = 100) {
+  const safeX = getPhotoPositionValue(positionX);
+  const safeY = getPhotoPositionValue(positionY);
+  const safeZoom = Math.min(getPhotoZoomValue(zoom), 132);
+  const moveX = ((safeX - 50) / 50) * 18;
+  const moveY = ((safeY - 50) / 50) * 18;
+  return `translate(${moveX}px, ${moveY}px) scale(${safeZoom / 100})`;
+}
+
+function applyPhotoPosition(positionX = 50, positionY = 50, zoom = 100) {
+  const safeX = getPhotoPositionValue(positionX);
+  const safeY = getPhotoPositionValue(positionY);
+  const safeZoom = getPhotoZoomValue(zoom);
+  if (photoZoomInput) photoZoomInput.value = String(safeZoom);
+  if (photoPositionXInput) photoPositionXInput.value = String(safeX);
+  if (photoPositionYInput) photoPositionYInput.value = String(safeY);
+  contactPhotoImage.style.objectPosition = "50% 50%";
+  contactPhotoImage.style.transform = buildEditorPhotoTransform(safeX, safeY, safeZoom);
+}
+
+function renderPhotoPreview(photoData, name = "", photoZoom = 100, photoPositionX = 50, photoPositionY = 50) {
+  applyPhotoPosition(photoPositionX, photoPositionY, photoZoom);
   if (photoData) {
     contactPhotoImage.src = photoData;
     contactPhotoImage.classList.remove("hidden");
@@ -287,6 +332,58 @@ function renderPhotoPreview(photoData, name = "", photoPositionX = 50, photoPosi
   }
 }
 
+function getPointerPoint(event) {
+  if ("touches" in event && event.touches?.length) {
+    return event.touches[0];
+  }
+  if ("changedTouches" in event && event.changedTouches?.length) {
+    return event.changedTouches[0];
+  }
+  return event;
+}
+
+function beginPhotoDrag(event) {
+  const contact = selectedContact();
+  if (!contact || !contact.photoData) return;
+  const point = getPointerPoint(event);
+  photoDragState = {
+    startX: point.clientX,
+    startY: point.clientY,
+    baseX: getPhotoPositionValue(photoPositionXInput?.value || contact.photoPositionX || 50),
+    baseY: getPhotoPositionValue(photoPositionYInput?.value || contact.photoPositionY || 50),
+  };
+  contactPhotoPreview?.classList.add("is-dragging");
+  event.preventDefault?.();
+}
+
+function updatePhotoDrag(event) {
+  if (!photoDragState) return;
+  const point = getPointerPoint(event);
+  const deltaX = point.clientX - photoDragState.startX;
+  const deltaY = point.clientY - photoDragState.startY;
+  const nextX = getPhotoPositionValue(photoDragState.baseX + deltaX * 0.45);
+  const nextY = getPhotoPositionValue(photoDragState.baseY + deltaY * 0.45);
+  if (photoPositionXInput) photoPositionXInput.value = String(nextX);
+  if (photoPositionYInput) photoPositionYInput.value = String(nextY);
+  refreshPhotoPositionPreview();
+  event.preventDefault?.();
+}
+
+function endPhotoDrag() {
+  photoDragState = null;
+  contactPhotoPreview?.classList.remove("is-dragging");
+}
+
+function handlePhotoWheel(event) {
+  const contact = selectedContact();
+  if (!contact || !contact.photoData) return;
+  event.preventDefault();
+  const currentZoom = getPhotoZoomValue(photoZoomInput?.value || contact.photoZoom || 100);
+  const nextZoom = getPhotoZoomValue(currentZoom + (event.deltaY < 0 ? 8 : -8));
+  if (photoZoomInput) photoZoomInput.value = String(nextZoom);
+  refreshPhotoPositionPreview();
+}
+
 function openEditor() {
   try {
     renderSelectedContact();
@@ -295,7 +392,7 @@ function openEditor() {
     editorTitle.textContent = "Nou contacte";
     contactForm.reset();
     gpsStatus.textContent = "";
-    renderPhotoPreview("", "", 50, 50);
+    renderPhotoPreview("", "", 100, 50, 50);
   }
   editorOverlay.classList.remove("hidden");
   editorOverlay.setAttribute("aria-hidden", "false");
@@ -309,6 +406,7 @@ function restoreEditorOriginalState() {
   for (const key of FIELD_ORDER) contact[key] = String(original[key] || "");
   contact.photoData = String(original.photoData || "");
   contact.photoPath = String(original.photoPath || "");
+  contact.photoZoom = getPhotoZoomValue(original.photoZoom);
   contact.photoPositionX = getPhotoPositionValue(original.photoPositionX);
   contact.photoPositionY = getPhotoPositionValue(original.photoPositionY);
 }
@@ -443,8 +541,8 @@ function renderContactList() {
     button.type = "button";
     button.className = `contact-row${contact.id === state.selectedId ? " active" : ""}`;
     button.innerHTML = `
-      <div class="contact-avatar" style="--photo-x: ${getPhotoPositionValue(contact.photoPositionX)}%; --photo-y: ${getPhotoPositionValue(contact.photoPositionY)}%">
-        ${contact.photoData ? `<img src="${escapeHtml(contact.photoData)}" alt="${escapeHtml(contact.name || "Foto")}">` : `<span>${escapeHtml(contactInitials(contact.name))}</span>`}
+      <div class="contact-avatar">
+        ${contact.photoData ? `<img src="${escapeHtml(contact.photoData)}" alt="${escapeHtml(contact.name || "Foto")}" style="object-position: 50% 50%; transform: ${buildListPhotoTransform(contact.photoPositionX, contact.photoPositionY, contact.photoZoom)};">` : `<span>${escapeHtml(contactInitials(contact.name))}</span>`}
       </div>
       <div>
         <p class="contact-name">${escapeHtml(contact.name || "Sense nom")}</p>
@@ -469,7 +567,7 @@ function renderSelectedContact() {
     editorTitle.textContent = "Nou contacte";
     contactForm.reset();
     gpsStatus.textContent = "";
-    renderPhotoPreview("", "", 50, 50);
+    renderPhotoPreview("", "", 100, 50, 50);
     updateMailLinks();
     updateDateInfos();
     return;
@@ -481,7 +579,7 @@ function renderSelectedContact() {
     if (input) input.value = contact[key] || "";
   }
   gpsStatus.textContent = contact.gpsLat && contact.gpsLng ? `GPS guardat: ${contact.gpsLat}, ${contact.gpsLng}` : "";
-  renderPhotoPreview(contact.photoData || "", contact.name || "", contact.photoPositionX, contact.photoPositionY);
+  renderPhotoPreview(contact.photoData || "", contact.name || "", contact.photoZoom, contact.photoPositionX, contact.photoPositionY);
   updateMailLinks();
   updateDateInfos();
   markEditorClean(contact);
@@ -545,6 +643,7 @@ async function saveCurrentContact(closeAfterSave = true) {
     contact[key] = DATE_KEYS.includes(key) ? formatDateLong(raw) : String(raw).trim();
   }
   contact.photoData = contact.photoData || "";
+  contact.photoZoom = getPhotoZoomValue(photoZoomInput?.value || contact.photoZoom || 100);
   contact.photoPositionX = getPhotoPositionValue(photoPositionXInput?.value || contact.photoPositionX || 50);
   contact.photoPositionY = getPhotoPositionValue(photoPositionYInput?.value || contact.photoPositionY || 50);
   contact.updatedAt = new Date().toISOString();
@@ -624,7 +723,10 @@ function handlePhotoSelected(event) {
         contact.photoData = loadedData;
         contact.photoPath = "";
       }
-      renderPhotoPreview(contact.photoData || "", contactForm.elements.namedItem("name")?.value || "", contact.photoPositionX, contact.photoPositionY);
+      contact.photoZoom = 100;
+      contact.photoPositionX = 50;
+      contact.photoPositionY = 50;
+      renderPhotoPreview(contact.photoData || "", contactForm.elements.namedItem("name")?.value || "", contact.photoZoom, contact.photoPositionX, contact.photoPositionY);
       renderContactList();
       syncEditorDirtyState();
     } catch (error) {
@@ -633,6 +735,24 @@ function handlePhotoSelected(event) {
   };
   reader.readAsDataURL(file);
   photoInput.value = "";
+}
+
+function deleteCurrentPhoto() {
+  const contact = selectedContact();
+  if (!contact || !contact.photoData) {
+    return;
+  }
+  if (!window.confirm("Vols esborrar aquesta foto del contacte?")) {
+    return;
+  }
+  contact.photoData = "";
+  contact.photoPath = "";
+  contact.photoZoom = 100;
+  contact.photoPositionX = 50;
+  contact.photoPositionY = 50;
+  renderPhotoPreview("", contactForm.elements.namedItem("name")?.value || "", 100, 50, 50);
+  renderContactList();
+  syncEditorDirtyState();
 }
 
 function buildDateParts(year, month, day, hasYear) {
@@ -1002,6 +1122,7 @@ function formChanged() {
     renderPhotoPreview(
       contact.photoData || "",
       contactForm.elements.namedItem("name")?.value || "",
+      photoZoomInput?.value || contact.photoZoom,
       photoPositionXInput?.value || contact.photoPositionX,
       photoPositionYInput?.value || contact.photoPositionY
     );
@@ -1228,20 +1349,31 @@ deleteQuickBtn?.addEventListener("click", () => deleteSelectedBtn.click());
 saveGpsBtn.addEventListener("click", captureGps);
 openGpsBtn.addEventListener("click", openGpsLocation);
 uploadPhotoBtn.addEventListener("click", uploadPhoto);
+deletePhotoBtn?.addEventListener("click", deleteCurrentPhoto);
 photoInput.addEventListener("change", handlePhotoSelected);
 function refreshPhotoPositionPreview() {
   const contact = selectedContact();
   renderPhotoPreview(
     contact?.photoData || "",
     contactForm.elements.namedItem("name")?.value || "",
-    photoPositionXInput?.value || contact?.photoPositionX || 50,
-    photoPositionYInput?.value || contact?.photoPositionY || 50
-  );
+      photoZoomInput?.value || contact?.photoZoom || 100,
+      photoPositionXInput?.value || contact?.photoPositionX || 50,
+      photoPositionYInput?.value || contact?.photoPositionY || 50
+    );
   syncEditorDirtyState();
 }
 
+photoZoomInput?.addEventListener("input", refreshPhotoPositionPreview);
 photoPositionXInput?.addEventListener("input", refreshPhotoPositionPreview);
 photoPositionYInput?.addEventListener("input", refreshPhotoPositionPreview);
+contactPhotoPreview?.addEventListener("mousedown", beginPhotoDrag);
+contactPhotoPreview?.addEventListener("touchstart", beginPhotoDrag, { passive: false });
+contactPhotoPreview?.addEventListener("wheel", handlePhotoWheel, { passive: false });
+window.addEventListener("mousemove", updatePhotoDrag);
+window.addEventListener("touchmove", updatePhotoDrag, { passive: false });
+window.addEventListener("mouseup", endPhotoDrag);
+window.addEventListener("touchend", endPhotoDrag);
+window.addEventListener("touchcancel", endPhotoDrag);
 backToListBtn.addEventListener("click", () => {
   void closeEditor();
 });
