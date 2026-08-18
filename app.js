@@ -136,7 +136,8 @@ const uploadPhotoBtn = document.getElementById("uploadPhotoBtn");
 const photoInput = document.getElementById("photoInput");
 const contactPhotoImage = document.getElementById("contactPhotoImage");
 const contactPhotoInitials = document.getElementById("contactPhotoInitials");
-const photoPositionInput = document.getElementById("photoPositionInput");
+const photoPositionXInput = document.getElementById("photoPositionXInput");
+const photoPositionYInput = document.getElementById("photoPositionYInput");
 const editorOverlay = document.getElementById("editorOverlay");
 const editorBackdrop = document.getElementById("editorBackdrop");
 const backToListBtn = document.getElementById("backToListBtn");
@@ -197,7 +198,14 @@ function safeFileName(name) {
 }
 
 function createEmptyContact() {
-  const contact = { id: crypto.randomUUID(), createdAt: new Date().toISOString(), photoData: "", photoPath: "", photoPosition: 50 };
+  const contact = {
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString(),
+    photoData: "",
+    photoPath: "",
+    photoPositionX: 50,
+    photoPositionY: 50,
+  };
   for (const key of FIELD_ORDER) contact[key] = "";
   return contact;
 }
@@ -211,7 +219,8 @@ function snapshotContact(contact) {
   for (const key of FIELD_ORDER) base[key] = String(contact?.[key] || "");
   base.photoData = String(contact?.photoData || "");
   base.photoPath = String(contact?.photoPath || "");
-  base.photoPosition = Number.isFinite(Number(contact?.photoPosition)) ? Number(contact.photoPosition) : 50;
+  base.photoPositionX = Number.isFinite(Number(contact?.photoPositionX)) ? Number(contact.photoPositionX) : 50;
+  base.photoPositionY = Number.isFinite(Number(contact?.photoPositionY)) ? Number(contact.photoPositionY) : 50;
   return JSON.stringify(base);
 }
 
@@ -224,7 +233,8 @@ function formSnapshot() {
   }
   draft.photoData = String(contact?.photoData || "");
   draft.photoPath = String(contact?.photoPath || "");
-  draft.photoPosition = Number(photoPositionInput?.value || 50);
+  draft.photoPositionX = Number(photoPositionXInput?.value || 50);
+  draft.photoPositionY = Number(photoPositionYInput?.value || 50);
   return JSON.stringify(draft);
 }
 
@@ -254,14 +264,17 @@ function getPhotoPositionValue(value) {
   return Math.max(0, Math.min(100, numeric));
 }
 
-function applyPhotoPosition(position = 50) {
-  const safePosition = getPhotoPositionValue(position);
-  if (photoPositionInput) photoPositionInput.value = String(safePosition);
-  contactPhotoImage.style.setProperty("--photo-y", `${safePosition}%`);
+function applyPhotoPosition(positionX = 50, positionY = 50) {
+  const safeX = getPhotoPositionValue(positionX);
+  const safeY = getPhotoPositionValue(positionY);
+  if (photoPositionXInput) photoPositionXInput.value = String(safeX);
+  if (photoPositionYInput) photoPositionYInput.value = String(safeY);
+  contactPhotoImage.style.setProperty("--photo-x", `${safeX}%`);
+  contactPhotoImage.style.setProperty("--photo-y", `${safeY}%`);
 }
 
-function renderPhotoPreview(photoData, name = "", photoPosition = 50) {
-  applyPhotoPosition(photoPosition);
+function renderPhotoPreview(photoData, name = "", photoPositionX = 50, photoPositionY = 50) {
+  applyPhotoPosition(photoPositionX, photoPositionY);
   if (photoData) {
     contactPhotoImage.src = photoData;
     contactPhotoImage.classList.remove("hidden");
@@ -282,7 +295,7 @@ function openEditor() {
     editorTitle.textContent = "Nou contacte";
     contactForm.reset();
     gpsStatus.textContent = "";
-    renderPhotoPreview("", "", 50);
+    renderPhotoPreview("", "", 50, 50);
   }
   editorOverlay.classList.remove("hidden");
   editorOverlay.setAttribute("aria-hidden", "false");
@@ -296,7 +309,8 @@ function restoreEditorOriginalState() {
   for (const key of FIELD_ORDER) contact[key] = String(original[key] || "");
   contact.photoData = String(original.photoData || "");
   contact.photoPath = String(original.photoPath || "");
-  contact.photoPosition = getPhotoPositionValue(original.photoPosition);
+  contact.photoPositionX = getPhotoPositionValue(original.photoPositionX);
+  contact.photoPositionY = getPhotoPositionValue(original.photoPositionY);
 }
 
 function discardEditorChanges() {
@@ -429,7 +443,7 @@ function renderContactList() {
     button.type = "button";
     button.className = `contact-row${contact.id === state.selectedId ? " active" : ""}`;
     button.innerHTML = `
-      <div class="contact-avatar" style="--photo-y: ${getPhotoPositionValue(contact.photoPosition)}%">
+      <div class="contact-avatar" style="--photo-x: ${getPhotoPositionValue(contact.photoPositionX)}%; --photo-y: ${getPhotoPositionValue(contact.photoPositionY)}%">
         ${contact.photoData ? `<img src="${escapeHtml(contact.photoData)}" alt="${escapeHtml(contact.name || "Foto")}">` : `<span>${escapeHtml(contactInitials(contact.name))}</span>`}
       </div>
       <div>
@@ -455,7 +469,7 @@ function renderSelectedContact() {
     editorTitle.textContent = "Nou contacte";
     contactForm.reset();
     gpsStatus.textContent = "";
-    renderPhotoPreview("", "", 50);
+    renderPhotoPreview("", "", 50, 50);
     updateMailLinks();
     updateDateInfos();
     return;
@@ -467,7 +481,7 @@ function renderSelectedContact() {
     if (input) input.value = contact[key] || "";
   }
   gpsStatus.textContent = contact.gpsLat && contact.gpsLng ? `GPS guardat: ${contact.gpsLat}, ${contact.gpsLng}` : "";
-  renderPhotoPreview(contact.photoData || "", contact.name || "", contact.photoPosition);
+  renderPhotoPreview(contact.photoData || "", contact.name || "", contact.photoPositionX, contact.photoPositionY);
   updateMailLinks();
   updateDateInfos();
   markEditorClean(contact);
@@ -531,7 +545,8 @@ async function saveCurrentContact(closeAfterSave = true) {
     contact[key] = DATE_KEYS.includes(key) ? formatDateLong(raw) : String(raw).trim();
   }
   contact.photoData = contact.photoData || "";
-  contact.photoPosition = getPhotoPositionValue(photoPositionInput?.value || contact.photoPosition || 50);
+  contact.photoPositionX = getPhotoPositionValue(photoPositionXInput?.value || contact.photoPositionX || 50);
+  contact.photoPositionY = getPhotoPositionValue(photoPositionYInput?.value || contact.photoPositionY || 50);
   contact.updatedAt = new Date().toISOString();
   await saveContacts();
   state.editorIsNew = false;
@@ -609,7 +624,7 @@ function handlePhotoSelected(event) {
         contact.photoData = loadedData;
         contact.photoPath = "";
       }
-      renderPhotoPreview(contact.photoData || "", contactForm.elements.namedItem("name")?.value || "", contact.photoPosition);
+      renderPhotoPreview(contact.photoData || "", contactForm.elements.namedItem("name")?.value || "", contact.photoPositionX, contact.photoPositionY);
       renderContactList();
       syncEditorDirtyState();
     } catch (error) {
@@ -983,7 +998,14 @@ function formChanged() {
   updateMailLinks();
   updateDateInfos();
   const contact = selectedContact();
-  if (contact) renderPhotoPreview(contact.photoData || "", contactForm.elements.namedItem("name")?.value || "", photoPositionInput?.value || contact.photoPosition);
+  if (contact) {
+    renderPhotoPreview(
+      contact.photoData || "",
+      contactForm.elements.namedItem("name")?.value || "",
+      photoPositionXInput?.value || contact.photoPositionX,
+      photoPositionYInput?.value || contact.photoPositionY
+    );
+  }
   syncEditorDirtyState();
 }
 
@@ -1207,11 +1229,19 @@ saveGpsBtn.addEventListener("click", captureGps);
 openGpsBtn.addEventListener("click", openGpsLocation);
 uploadPhotoBtn.addEventListener("click", uploadPhoto);
 photoInput.addEventListener("change", handlePhotoSelected);
-photoPositionInput?.addEventListener("input", () => {
+function refreshPhotoPositionPreview() {
   const contact = selectedContact();
-  renderPhotoPreview(contact?.photoData || "", contactForm.elements.namedItem("name")?.value || "", photoPositionInput.value);
+  renderPhotoPreview(
+    contact?.photoData || "",
+    contactForm.elements.namedItem("name")?.value || "",
+    photoPositionXInput?.value || contact?.photoPositionX || 50,
+    photoPositionYInput?.value || contact?.photoPositionY || 50
+  );
   syncEditorDirtyState();
-});
+}
+
+photoPositionXInput?.addEventListener("input", refreshPhotoPositionPreview);
+photoPositionYInput?.addEventListener("input", refreshPhotoPositionPreview);
 backToListBtn.addEventListener("click", () => {
   void closeEditor();
 });

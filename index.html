@@ -10,8 +10,8 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
     <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
     <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
-    <link rel="manifest" href="./manifest.webmanifest?v=38">
-    <link rel="stylesheet" href="./styles.css?v=38">
+    <link rel="manifest" href="./manifest.webmanifest?v=39">
+    <link rel="stylesheet" href="./styles.css?v=39">
   </head>
   <body>
     <div class="page-shell">
@@ -38,7 +38,10 @@
         <section class="directory-header">
           <div class="directory-header-copy">
             <p class="eyebrow">Directorio</p>
-            <h2>Llista de contactes</h2>
+            <div class="title-with-version">
+              <h2>Llista de contactes</h2>
+              <span class="app-version-pill">v39</span>
+            </div>
           </div>
 
           <div class="directory-header-tools">
@@ -156,8 +159,17 @@
               </div>
               <div class="photo-adjust-panel">
                 <label class="photo-adjust-label" for="photoPositionInput">Ajustar foto</label>
-                <input id="photoPositionInput" class="photo-adjust-input" type="range" min="0" max="100" value="50">
-                <p class="subtle">Mou aquest control per pujar o baixar la foto fins que quedi ben centrada.</p>
+                <div class="photo-adjust-grid">
+                  <label class="photo-adjust-axis" for="photoPositionXInput">
+                    <span>Esquerra / dreta</span>
+                    <input id="photoPositionXInput" class="photo-adjust-input" type="range" min="0" max="100" value="50">
+                  </label>
+                  <label class="photo-adjust-axis" for="photoPositionYInput">
+                    <span>Amunt / avall</span>
+                    <input id="photoPositionYInput" class="photo-adjust-input" type="range" min="0" max="100" value="50">
+                  </label>
+                </div>
+                <p class="subtle">Mou els dos controls fins que la cara quedi ben centrada.</p>
               </div>
             </div>
             <input id="photoInput" type="file" accept="image/*" hidden>
@@ -370,6 +382,6 @@
     </datalist>
 
     <script src="./jszip.min.js"></script>
-    <script src="./app.js?v=38"></script>
+    <script src="./app.js?v=39"></script>
   </body>
 </html>
