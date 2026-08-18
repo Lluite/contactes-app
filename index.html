@@ -10,8 +10,8 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
     <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
     <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
-    <link rel="manifest" href="./manifest.webmanifest?v=47">
-    <link rel="stylesheet" href="./styles.css?v=47">
+    <link rel="manifest" href="./manifest.webmanifest?v=48">
+    <link rel="stylesheet" href="./styles.css?v=48">
   </head>
   <body>
     <div class="page-shell">
@@ -40,7 +40,7 @@
             <p class="eyebrow">Directorio</p>
             <div class="title-with-version">
               <h2>Llista de contactes</h2>
-              <span class="app-version-pill">v47</span>
+              <span class="app-version-pill">v48</span>
             </div>
           </div>
 
@@ -64,6 +64,7 @@
                 <button id="openDatesCalendarQuickBtn" class="tools-menu-item" type="button" role="menuitem">Calendari de dates</button>
                 <button id="openDuplicatesQuickBtn" class="tools-menu-item" type="button" role="menuitem">Comprovar duplicats</button>
                 <button id="importQuickBtn" class="tools-menu-item" type="button" role="menuitem">Importar XLSX</button>
+                <button id="importJsonQuickBtn" class="tools-menu-item" type="button" role="menuitem">Importar copia JSON</button>
                 <button id="exportQuickBtn" class="tools-menu-item" type="button" role="menuitem">Exportar XLSX</button>
                 <button id="backupQuickBtn" class="tools-menu-item" type="button" role="menuitem">Copia de seguretat</button>
                 <button id="selectQuickBtn" class="tools-menu-item" type="button" role="menuitem">Marcar trobats</button>
@@ -113,11 +114,13 @@
             <button id="openDatesCalendarBtn" class="secondary-btn" type="button">Calendari de dates</button>
             <button id="openDuplicatesBtn" class="secondary-btn" type="button">Comprovar duplicats</button>
             <button id="importXlsxBtn" class="secondary-btn" type="button">Importar XLSX</button>
+            <button id="importJsonBtn" class="secondary-btn" type="button">Importar copia JSON</button>
             <button id="exportXlsxBtn" class="secondary-btn" type="button">Exportar XLSX</button>
             <button id="backupBtn" class="secondary-btn" type="button">Copia de seguretat</button>
             <button id="selectFilteredBtn" class="ghost-btn" type="button">Marcar trobats</button>
             <button id="deleteSelectedBtn" class="danger-btn" type="button">Esborrar seleccionats</button>
             <input id="xlsxInput" type="file" accept=".xlsx" hidden>
+            <input id="jsonInput" type="file" accept=".json,application/json" hidden>
           </div>
         </section>
 
@@ -383,6 +386,6 @@
     </datalist>
 
     <script src="./jszip.min.js"></script>
-    <script src="./app.js?v=47"></script>
+    <script src="./app.js?v=48"></script>
   </body>
 </html>

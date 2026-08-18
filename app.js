@@ -111,6 +111,8 @@ const toolsMenuBtn = document.getElementById("toolsMenuBtn");
 const toolsMenuPanel = document.getElementById("toolsMenuPanel");
 const importXlsxBtn = document.getElementById("importXlsxBtn");
 const importQuickBtn = document.getElementById("importQuickBtn");
+const importJsonBtn = document.getElementById("importJsonBtn");
+const importJsonQuickBtn = document.getElementById("importJsonQuickBtn");
 const exportXlsxBtn = document.getElementById("exportXlsxBtn");
 const exportQuickBtn = document.getElementById("exportQuickBtn");
 const backupBtn = document.getElementById("backupBtn");
@@ -124,6 +126,7 @@ const openDatesCalendarQuickBtn = document.getElementById("openDatesCalendarQuic
 const openDuplicatesBtn = document.getElementById("openDuplicatesBtn");
 const openDuplicatesQuickBtn = document.getElementById("openDuplicatesQuickBtn");
 const xlsxInput = document.getElementById("xlsxInput");
+const jsonInput = document.getElementById("jsonInput");
 const saveGpsBtn = document.getElementById("saveGpsBtn");
 const openGpsBtn = document.getElementById("openGpsBtn");
 const gpsStatus = document.getElementById("gpsStatus");
@@ -213,6 +216,23 @@ function createEmptyContact() {
     photoPositionY: 50,
   };
   for (const key of FIELD_ORDER) contact[key] = "";
+  return contact;
+}
+
+function sanitizeImportedJsonContact(rawContact) {
+  const contact = createEmptyContact();
+  const source = rawContact && typeof rawContact === "object" ? rawContact : {};
+  contact.id = String(source.id || crypto.randomUUID());
+  contact.createdAt = String(source.createdAt || new Date().toISOString());
+  contact.photoData = String(source.photoData || "");
+  contact.photoPath = String(source.photoPath || "");
+  contact.photoZoom = getPhotoZoomValue(source.photoZoom);
+  contact.photoPositionX = getPhotoPositionValue(source.photoPositionX);
+  contact.photoPositionY = getPhotoPositionValue(source.photoPositionY);
+  for (const key of FIELD_ORDER) {
+    const value = source[key] ?? "";
+    contact[key] = DATE_KEYS.includes(key) ? formatDateLong(value) : String(value).trim();
+  }
   return contact;
 }
 
@@ -1280,6 +1300,31 @@ async function importContactsFromFile(file) {
   renderAll();
 }
 
+async function importContactsFromJsonFile(file) {
+  const text = await file.text();
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new Error("El fitxer JSON no te un format valid.");
+  }
+  if (!Array.isArray(parsed)) {
+    throw new Error("La copia JSON ha de contenir una llista de contactes.");
+  }
+  if (state.contacts.length) {
+    const confirmed = window.confirm("Aquesta copia reemplaçara els contactes actuals. Vols continuar?");
+    if (!confirmed) return;
+  }
+  state.contacts = parsed.map(sanitizeImportedJsonContact).filter((contact) => {
+    return FIELD_ORDER.some((key) => String(contact[key] || "").trim()) || contact.photoData;
+  });
+  state.selectedId = state.contacts[0]?.id || null;
+  state.selectedIds.clear();
+  await saveContacts();
+  renderAll();
+  alert(`He importat ${state.contacts.length} contactes des de la copia JSON.`);
+}
+
 function registerServiceWorker() {
   if (!isDesktopApp && "serviceWorker" in navigator) {
     navigator.serviceWorker.register("./service-worker.js").then((registration) => registration.update().catch(() => {})).catch(() => {});
@@ -1338,6 +1383,8 @@ toolsMenuBtn?.addEventListener("click", (event) => {
 toolsMenuPanel?.addEventListener("click", (event) => event.stopPropagation());
 importXlsxBtn.addEventListener("click", () => xlsxInput.click());
 importQuickBtn?.addEventListener("click", () => importXlsxBtn.click());
+importJsonBtn?.addEventListener("click", () => jsonInput.click());
+importJsonQuickBtn?.addEventListener("click", () => importJsonBtn.click());
 exportXlsxBtn.addEventListener("click", exportContactsXlsx);
 exportQuickBtn?.addEventListener("click", () => exportXlsxBtn.click());
 backupBtn.addEventListener("click", exportBackupJson);
@@ -1402,6 +1449,17 @@ xlsxInput.addEventListener("change", async (event) => {
     alert(`No he pogut importar el fitxer: ${error.message}`);
   } finally {
     xlsxInput.value = "";
+  }
+});
+jsonInput?.addEventListener("change", async (event) => {
+  const [file] = event.target.files || [];
+  if (!file) return;
+  try {
+    await importContactsFromJsonFile(file);
+  } catch (error) {
+    alert(`No he pogut importar la copia JSON: ${error.message}`);
+  } finally {
+    jsonInput.value = "";
   }
 });
 document.addEventListener("keydown", (event) => {
