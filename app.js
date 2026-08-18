@@ -21,6 +21,7 @@ const FIELD_ORDER = [
   "address",
   "postalCode",
   "city",
+  "notes",
   "gpsLat",
   "gpsLng",
 ];
@@ -44,6 +45,7 @@ const FIELD_LABELS = {
   address: "Adreca",
   postalCode: "C.P.",
   city: "Poblacio",
+  notes: "Notes",
   gpsLat: "Latitud",
   gpsLng: "Longitud",
 };
@@ -67,6 +69,7 @@ const IMPORT_ALIASES = {
   address: ["Adreca", "Dirección", "Direccion"],
   postalCode: ["C.P.", "Codigo postal", "Código postal"],
   city: ["Poblacio", "Población", "Poblacion", "Ciudad"],
+  notes: ["Notes", "Notas", "Observacions", "Observaciones"],
   gpsLat: ["Latitud", "GPS Lat"],
   gpsLng: ["Longitud", "GPS Lng"],
 };
@@ -133,6 +136,7 @@ const uploadPhotoBtn = document.getElementById("uploadPhotoBtn");
 const photoInput = document.getElementById("photoInput");
 const contactPhotoImage = document.getElementById("contactPhotoImage");
 const contactPhotoInitials = document.getElementById("contactPhotoInitials");
+const photoPositionInput = document.getElementById("photoPositionInput");
 const editorOverlay = document.getElementById("editorOverlay");
 const editorBackdrop = document.getElementById("editorBackdrop");
 const backToListBtn = document.getElementById("backToListBtn");
@@ -193,7 +197,7 @@ function safeFileName(name) {
 }
 
 function createEmptyContact() {
-  const contact = { id: crypto.randomUUID(), createdAt: new Date().toISOString(), photoData: "", photoPath: "" };
+  const contact = { id: crypto.randomUUID(), createdAt: new Date().toISOString(), photoData: "", photoPath: "", photoPosition: 50 };
   for (const key of FIELD_ORDER) contact[key] = "";
   return contact;
 }
@@ -207,6 +211,7 @@ function snapshotContact(contact) {
   for (const key of FIELD_ORDER) base[key] = String(contact?.[key] || "");
   base.photoData = String(contact?.photoData || "");
   base.photoPath = String(contact?.photoPath || "");
+  base.photoPosition = Number.isFinite(Number(contact?.photoPosition)) ? Number(contact.photoPosition) : 50;
   return JSON.stringify(base);
 }
 
@@ -219,6 +224,7 @@ function formSnapshot() {
   }
   draft.photoData = String(contact?.photoData || "");
   draft.photoPath = String(contact?.photoPath || "");
+  draft.photoPosition = Number(photoPositionInput?.value || 50);
   return JSON.stringify(draft);
 }
 
@@ -242,7 +248,20 @@ function contactInitials(name) {
   return words.slice(0, 2).map((word) => word[0]).join("").toUpperCase();
 }
 
-function renderPhotoPreview(photoData, name = "") {
+function getPhotoPositionValue(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return 50;
+  return Math.max(0, Math.min(100, numeric));
+}
+
+function applyPhotoPosition(position = 50) {
+  const safePosition = getPhotoPositionValue(position);
+  if (photoPositionInput) photoPositionInput.value = String(safePosition);
+  contactPhotoImage.style.setProperty("--photo-y", `${safePosition}%`);
+}
+
+function renderPhotoPreview(photoData, name = "", photoPosition = 50) {
+  applyPhotoPosition(photoPosition);
   if (photoData) {
     contactPhotoImage.src = photoData;
     contactPhotoImage.classList.remove("hidden");
@@ -263,7 +282,7 @@ function openEditor() {
     editorTitle.textContent = "Nou contacte";
     contactForm.reset();
     gpsStatus.textContent = "";
-    renderPhotoPreview("", "");
+    renderPhotoPreview("", "", 50);
   }
   editorOverlay.classList.remove("hidden");
   editorOverlay.setAttribute("aria-hidden", "false");
@@ -277,6 +296,7 @@ function restoreEditorOriginalState() {
   for (const key of FIELD_ORDER) contact[key] = String(original[key] || "");
   contact.photoData = String(original.photoData || "");
   contact.photoPath = String(original.photoPath || "");
+  contact.photoPosition = getPhotoPositionValue(original.photoPosition);
 }
 
 function discardEditorChanges() {
@@ -358,7 +378,7 @@ function filteredContacts() {
       if (first !== state.activeLetter) return false;
     }
     if (!query) return true;
-    const haystack = normalize([contact.name, contact.group, contact.phoneMobile, contact.phoneWork, contact.phoneHome, contact.mail1, contact.mail2, contact.city].join(" "));
+    const haystack = normalize([contact.name, contact.group, contact.phoneMobile, contact.phoneWork, contact.phoneHome, contact.mail1, contact.mail2, contact.city, contact.notes].join(" "));
     return haystack.includes(query);
   }).sort((a, b) => {
     const nameA = normalize(a.name || "");
@@ -409,7 +429,7 @@ function renderContactList() {
     button.type = "button";
     button.className = `contact-row${contact.id === state.selectedId ? " active" : ""}`;
     button.innerHTML = `
-      <div class="contact-avatar">
+      <div class="contact-avatar" style="--photo-y: ${getPhotoPositionValue(contact.photoPosition)}%">
         ${contact.photoData ? `<img src="${escapeHtml(contact.photoData)}" alt="${escapeHtml(contact.name || "Foto")}">` : `<span>${escapeHtml(contactInitials(contact.name))}</span>`}
       </div>
       <div>
@@ -435,7 +455,7 @@ function renderSelectedContact() {
     editorTitle.textContent = "Nou contacte";
     contactForm.reset();
     gpsStatus.textContent = "";
-    renderPhotoPreview("", "");
+    renderPhotoPreview("", "", 50);
     updateMailLinks();
     updateDateInfos();
     return;
@@ -447,7 +467,7 @@ function renderSelectedContact() {
     if (input) input.value = contact[key] || "";
   }
   gpsStatus.textContent = contact.gpsLat && contact.gpsLng ? `GPS guardat: ${contact.gpsLat}, ${contact.gpsLng}` : "";
-  renderPhotoPreview(contact.photoData || "", contact.name || "");
+  renderPhotoPreview(contact.photoData || "", contact.name || "", contact.photoPosition);
   updateMailLinks();
   updateDateInfos();
   markEditorClean(contact);
@@ -511,6 +531,7 @@ async function saveCurrentContact(closeAfterSave = true) {
     contact[key] = DATE_KEYS.includes(key) ? formatDateLong(raw) : String(raw).trim();
   }
   contact.photoData = contact.photoData || "";
+  contact.photoPosition = getPhotoPositionValue(photoPositionInput?.value || contact.photoPosition || 50);
   contact.updatedAt = new Date().toISOString();
   await saveContacts();
   state.editorIsNew = false;
@@ -588,7 +609,7 @@ function handlePhotoSelected(event) {
         contact.photoData = loadedData;
         contact.photoPath = "";
       }
-      renderPhotoPreview(contact.photoData || "", contactForm.elements.namedItem("name")?.value || "");
+      renderPhotoPreview(contact.photoData || "", contactForm.elements.namedItem("name")?.value || "", contact.photoPosition);
       renderContactList();
       syncEditorDirtyState();
     } catch (error) {
@@ -962,7 +983,7 @@ function formChanged() {
   updateMailLinks();
   updateDateInfos();
   const contact = selectedContact();
-  if (contact) renderPhotoPreview(contact.photoData || "", contactForm.elements.namedItem("name")?.value || "");
+  if (contact) renderPhotoPreview(contact.photoData || "", contactForm.elements.namedItem("name")?.value || "", photoPositionInput?.value || contact.photoPosition);
   syncEditorDirtyState();
 }
 
@@ -1186,6 +1207,11 @@ saveGpsBtn.addEventListener("click", captureGps);
 openGpsBtn.addEventListener("click", openGpsLocation);
 uploadPhotoBtn.addEventListener("click", uploadPhoto);
 photoInput.addEventListener("change", handlePhotoSelected);
+photoPositionInput?.addEventListener("input", () => {
+  const contact = selectedContact();
+  renderPhotoPreview(contact?.photoData || "", contactForm.elements.namedItem("name")?.value || "", photoPositionInput.value);
+  syncEditorDirtyState();
+});
 backToListBtn.addEventListener("click", () => {
   void closeEditor();
 });

@@ -28,7 +28,8 @@ body {
 }
 
 button,
-input {
+input,
+textarea {
   font: inherit;
 }
 
@@ -51,7 +52,19 @@ input {
   background: rgba(255, 255, 255, 0.98);
 }
 
-input:focus {
+textarea {
+  width: 100%;
+  padding: 14px 15px;
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.98);
+  resize: vertical;
+  min-height: 118px;
+}
+
+input:focus,
+textarea:focus {
   outline: none;
   border-color: var(--brand-2);
   box-shadow: 0 0 0 4px rgba(59, 110, 167, 0.12);
@@ -498,7 +511,10 @@ input:focus {
 .contact-avatar img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center var(--photo-y, 50%);
+  padding: 4px;
+  background: linear-gradient(145deg, #f8fbff, #edf3fb);
 }
 
 .contact-avatar span {
@@ -715,6 +731,54 @@ input:focus {
   font-size: 0.92rem;
 }
 
+.duplicates-content {
+  display: grid;
+  gap: 18px;
+}
+
+.duplicate-section h2 {
+  margin: 0 0 12px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.3rem;
+}
+
+.duplicate-card {
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: linear-gradient(180deg, #ffffff, #f7fbff);
+}
+
+.duplicate-card h3 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+}
+
+.duplicate-list {
+  display: grid;
+  gap: 10px;
+}
+
+.duplicate-row {
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.duplicate-row strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.duplicate-row span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
 
 .panel-head {
   display: flex;
@@ -800,7 +864,27 @@ input:focus {
 .contact-photo-preview img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center var(--photo-y, 50%);
+  padding: 8px;
+  background: linear-gradient(145deg, #f8fbff, #edf3fb);
+}
+
+.photo-adjust-panel {
+  display: grid;
+  gap: 10px;
+  align-content: center;
+}
+
+.photo-adjust-label {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--brand);
+}
+
+.photo-adjust-input {
+  width: 100%;
+  accent-color: #2f64a0;
 }
 
 .contact-photo-preview span {
