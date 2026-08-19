@@ -711,10 +711,26 @@ textarea:focus {
 }
 
 .calendar-date-row {
+  position: relative;
   padding: 12px 14px;
   border: 1px solid var(--border);
   border-radius: 16px;
   background: #ffffff;
+}
+
+.calendar-date-row.today {
+  border-color: rgba(117, 165, 226, 0.58);
+  background: linear-gradient(180deg, #e6f2ff 0%, #d7eaff 100%);
+  box-shadow: 0 14px 24px rgba(96, 145, 210, 0.16);
+}
+
+.calendar-date-row.today::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 6px;
+  border-radius: 16px 0 0 16px;
+  background: linear-gradient(180deg, #79a8e1, #4f86cb);
 }
 
 .calendar-date-row strong {
@@ -774,6 +790,22 @@ textarea:focus {
   display: block;
   color: var(--muted);
   font-size: 0.92rem;
+}
+
+.calendar-today-pill {
+  display: inline-flex !important;
+  align-items: center;
+  min-height: 28px;
+  margin: 8px 0 2px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--brand);
+  border: 1px solid rgba(79, 134, 203, 0.20);
+  font-size: 0.76rem !important;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .duplicates-content {

@@ -927,6 +927,7 @@ function collectAllDatesByMonth() {
         detail: describeDate(rawDate, ""),
         day: parts.day,
         month,
+        isToday: diffDays(TODAY, nextOccurrence(parts)) === 0,
       });
     }
   }
@@ -969,9 +970,10 @@ function renderDatesCalendar() {
     card.className = "calendar-month-card";
     if (index === 0) card.open = true;
     const listHtml = group.items.map((item) => `
-      <article class="calendar-date-row">
+      <article class="calendar-date-row${item.isToday ? " today" : ""}">
         <strong>${escapeHtml(item.contactName)}</strong>
         <span>${escapeHtml(item.label)}</span>
+        ${item.isToday ? `<span class="calendar-today-pill">Avui</span>` : ""}
         <span class="calendar-type-badge ${dateTypeClass(item.type)}"><strong>${escapeHtml(item.type)}</strong>${item.detail ? `<span>${escapeHtml(item.detail)}</span>` : ""}</span>
       </article>
     `).join("");
