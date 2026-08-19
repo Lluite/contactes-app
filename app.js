@@ -900,7 +900,7 @@ function renderReminders() {
       : reminder.daysAway === 1
         ? "Dema"
         : `Falten ${reminder.daysAway} dies`;
-    item.className = `reminder-item${reminder.daysAway === 0 ? " today" : " upcoming"}`;
+    item.className = `reminder-item reminder-${dateTypeClass(reminder.type)}${reminder.daysAway === 0 ? " today" : " upcoming"}`;
     item.innerHTML = `
       <h3>${escapeHtml(reminder.contactName)} · ${escapeHtml(reminder.type)}</h3>
       <p>${escapeHtml(reminder.label)}${reminder.age > 0 ? ` · ${reminder.age} anys` : ""}</p>
