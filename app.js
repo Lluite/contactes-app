@@ -886,7 +886,8 @@ function collectReminders() {
 
 function renderReminders() {
   const reminders = collectReminders();
-  upcomingCount.textContent = String(reminders.length);
+  const todayReminderCount = reminders.filter((reminder) => reminder.daysAway === 0).length;
+  upcomingCount.textContent = String(todayReminderCount);
   reminderList.innerHTML = "";
   if (!reminders.length) {
     reminderList.innerHTML = `<div class="empty-state">No hi ha cap data important per avui ni per als proxims 15 dies.</div>`;
